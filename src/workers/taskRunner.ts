@@ -1,6 +1,6 @@
 import { Repository } from 'typeorm';
 import { Task } from '../models/Task';
-import { getJobForTaskType } from '../jobs/JobFactory';
+import { getJobForTaskType } from '../factories/JobFactory';
 import { WorkflowStatus } from '../factories/WorkflowFactory';
 import { Workflow } from '../models/Workflow';
 import { Result } from '../models/Result';

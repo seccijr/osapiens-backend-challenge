@@ -1,15 +1,16 @@
-import { Repository } from 'typeorm';
+import { DataSource, EntityTarget, Repository } from 'typeorm';
 
 import { Task } from '../../src/models/Task';
 import { Result } from '../../src/models/Result';
 import { TaskStatus } from '../../src/workers/TaskRunner';
-import { ReportGenerationJob } from '../../src/jobs/ReportGenerationJob';
+import { ReportGenerationJob } from '../../src/jobs/ReportGenerationJob'
 
 describe('ReportGenerationJob', () => {
     let job: ReportGenerationJob;
     let mockTask: Task;
     let mockResultRepository: Repository<Result>;
     let mockTaskRepository: Repository<Task>;
+    let mockDataSource: DataSource;
 
     beforeEach(() => {
         mockResultRepository = {
@@ -22,14 +23,29 @@ describe('ReportGenerationJob', () => {
             findOne: jest.fn(),
         } as unknown as Repository<Task>;
 
-        job = new ReportGenerationJob(mockResultRepository, mockTaskRepository);
+        mockDataSource = {
+            getRepository: jest.fn().mockImplementation((entity: EntityTarget<any>) => {
+                if (entity === Result) {
+                    return mockResultRepository;
+                }
+                if (entity === Task) {
+                    return mockTaskRepository;
+                }
+                throw new Error(`Repository not mocked for entity: ${entity}`);
+            })
+        } as unknown as DataSource;
+
+
+        job = new ReportGenerationJob(mockDataSource);
 
         mockTask = {
             taskId: 'report-task-id',
-            workflowId: 'test-workflow-id',
-            taskType: 'reportGeneration',
+            workflow: {
+                workflowId: 'test-workflow-id',
+            },
+            taskType: 'report_generation',
             status: TaskStatus.InProgress,
-            data: JSON.stringify({}),
+            geoJson: JSON.stringify({}),
             progress: '',
         } as Task;
     });
@@ -40,14 +56,18 @@ describe('ReportGenerationJob', () => {
             const mockTasks = [
                 {
                     taskId: 'task-1',
-                    workflowId: 'test-workflow-id',
+                    workflow: {
+                        workflowId: 'test-workflow-id',
+                    },
                     taskType: 'polygonArea',
                     status: TaskStatus.Completed,
                     resultId: 'result-1',
                 },
                 {
                     taskId: 'task-2',
-                    workflowId: 'test-workflow-id',
+                    workflow: {
+                        workflowId: 'test-workflow-id',
+                    },
                     taskType: 'dataAnalysis',
                     status: TaskStatus.Completed,
                     resultId: 'result-2',
@@ -78,7 +98,7 @@ describe('ReportGenerationJob', () => {
 
             // Assert
             expect(result).toBeDefined();
-            expect(result.workflowId).toBe('test-workflow-id');
+            expect(result.workflow.workflowId).toBe('test-workflow-id');
             expect(result.tasks).toHaveLength(2);
             expect(result.tasks[0].taskId).toBe('task-1');
             expect(result.tasks[0].type).toBe('polygonArea');
@@ -92,14 +112,18 @@ describe('ReportGenerationJob', () => {
             const mockTasks = [
                 {
                     taskId: 'task-1',
-                    workflowId: 'test-workflow-id',
+                    workflow: {
+                        workflowId: 'test-workflow-id',
+                    },
                     taskType: 'polygonArea',
                     status: TaskStatus.Completed,
                     resultId: 'result-1',
                 },
                 {
                     taskId: 'task-2',
-                    workflowId: 'test-workflow-id',
+                    workflow: {
+                        workflowId: 'test-workflow-id',
+                    },
                     taskType: 'dataAnalysis',
                     status: TaskStatus.Failed,
                     progress: 'Failed due to invalid input',
@@ -151,7 +175,7 @@ describe('ReportGenerationJob', () => {
 
         it('should throw an error if workflow ID is missing', async () => {
             // Arrange
-            mockTask.workflowId = undefined;
+            mockTask.workflow.workflowId = '';
 
             // Act & Assert
             await expect(job.run(mockTask)).rejects.toThrow('WorkflowId is required');

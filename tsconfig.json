@@ -10,7 +10,7 @@
         "experimentalDecorators": true, // Enables experimental support for decorators
         "emitDecoratorMetadata": true, // Emits design-type metadata for decorated declarations
         "outDir": "./dist", // Output directory for compiled files
-        "rootDir": "./src", // Root directory of input files
+        "rootDir": "./", // Root directory of input files
         "forceConsistentCasingInFileNames": true, // Ensures consistent casing in file names
         "types": ["jest"]
     },
