@@ -14,8 +14,11 @@ import { JobFactory } from './factories/JobFactory';
 import { WorkflowFactory } from './factories/WorkflowFactory';
 
 import { createRootRouter } from './routes/RootRoute';
-import { createAnalysisRouter } from './routes/WorkflowRoutes';
+import { createAnalysisRouter } from './routes/AnalysisRoutes';
+import { createWorkflowRouter } from './routes/WorkflowRoutes';
 import { ResultFactory } from './factories/ResultFactory';
+import { WorkflowService } from './services/WorkflowService';
+import { WorkflowController } from './controllers/WorkflowController';
 
 
 // Dependency resolution
@@ -36,12 +39,20 @@ const taskRunner = new TaskRunner(
 );
 const taskWorker = new TaskWorker(taskRunner, tasksRepository);
 
+const workflowService = new WorkflowService(
+    workflowsRepository,
+    tasksRepository,
+    resultsRepository
+);
+const workflowController = new WorkflowController(workflowService);
+
 
 // Dependency injection
 const app = express();
 app.use(express.json());
 app.use('/', createRootRouter());
 app.use('/analysis', createAnalysisRouter(workflowFactory));
+app.use('/workflow', createWorkflowRouter(workflowController));
 
 AppDataSource.initialize()
     .then(() => {

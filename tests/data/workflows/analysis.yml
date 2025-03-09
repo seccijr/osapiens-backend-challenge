@@ -1,0 +1,10 @@
+name: "analysis_polygon_area_workflow"
+steps:
+  - taskType: "analysis"
+    stepNumber: 1
+  - taskType: "polygonArea"
+    stepNumber: 2
+  - taskType: "reportGeneration"
+    stepNumber: 3
+  - taskType: "notification"
+    stepNumber: 4

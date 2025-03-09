@@ -30,7 +30,7 @@ describe('ReportGenerationJob', () => {
             workflow: {
                 workflowId: 'test-workflow-id',
             },
-            taskType: 'report_generation',
+            taskType: 'reportGeneration',
             status: TaskStatus.InProgress,
             geoJson: JSON.stringify({}),
             progress: '',

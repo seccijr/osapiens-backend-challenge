@@ -5,13 +5,20 @@ import { TaskRunner, TaskStatus } from './TaskRunner';
 
 
 export class TaskWorker {
+    private stopFlag = false;
+
     constructor(
         private taskRunner: TaskRunner,
         private taskRepository: Repository<Task>
     ) { }
 
+    public stop = () => {
+        this.stopFlag = true;
+    }
+
     pool = async () => {
-        while (true) {
+        this.stopFlag = true;
+        while (!this.stopFlag) {
             const task = await this.taskRepository.findOne({
                 where: { status: TaskStatus.Queued },
                 relations: ['workflow'] // Ensure workflow is loaded

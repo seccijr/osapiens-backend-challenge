@@ -1,4 +1,4 @@
-import { DataSource, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 
 import { Job } from '../jobs/Job';
 import { PolygonAreaJob } from '../jobs/PolygonAreaJob';
@@ -11,8 +11,8 @@ import { Task } from '../models/Task';
 const jobMap: Record<string, (resultRepository: Repository<Result>, taskRepository: Repository<Task>) => Job> = {
     'analysis': () => new DataAnalysisJob(),
     'notification': () => new EmailNotificationJob(),
-    'polygon_area': () => new PolygonAreaJob(),
-    'report_generation': (resultRepository: Repository<Result>, taskRepository: Repository<Task>) => new ReportGenerationJob(resultRepository, taskRepository),
+    'polygonArea': () => new PolygonAreaJob(),
+    'reportGeneration': (resultRepository: Repository<Result>, taskRepository: Repository<Task>) => new ReportGenerationJob(resultRepository, taskRepository),
 };
 
 export class JobFactory {

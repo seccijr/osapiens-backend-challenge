@@ -93,7 +93,7 @@ export class WorkflowService {
                     taskInfo.result = JSON.parse(result.data);
                     finalResult.summary.completedTasks++;
                 }
-            } else if (task.status === TaskStatus.Failed) {
+            } else {
                 // Add error information for failed tasks
                 taskInfo.error = task.progress; // Error message is stored in the progress field
                 finalResult.summary.failedTasks++;
