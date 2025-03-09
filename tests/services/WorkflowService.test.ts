@@ -43,14 +43,14 @@ describe('WorkflowService', () => {
             const tasks = [
                 {
                     taskId: 'task-1',
-                    workflowId: 'test-workflow',
+                    workflow: workflow,
                     taskType: 'polygonArea',
                     status: TaskStatus.Completed,
                     resultId: 'result-1',
                 },
                 {
                     taskId: 'task-2',
-                    workflowId: 'test-workflow',
+                    workflow: workflow,
                     taskType: 'dataAnalysis',
                     status: TaskStatus.Completed,
                     resultId: 'result-2',
@@ -103,14 +103,14 @@ describe('WorkflowService', () => {
             const tasks = [
                 {
                     taskId: 'task-1',
-                    workflowId: 'test-workflow',
+                    workflow: workflow,
                     taskType: 'polygonArea',
                     status: TaskStatus.Completed,
                     resultId: 'result-1',
                 },
                 {
                     taskId: 'task-2',
-                    workflowId: 'test-workflow',
+                    workflow: workflow,
                     taskType: 'dataAnalysis',
                     status: TaskStatus.Failed,
                     progress: 'Error: Invalid input',
@@ -156,14 +156,14 @@ describe('WorkflowService', () => {
             const tasks = [
                 {
                     taskId: 'task-1',
-                    workflowId: 'test-workflow',
+                    workflow: workflow,
                     taskType: 'polygonArea',
                     status: TaskStatus.Completed,
                     resultId: 'result-1',
                 },
                 {
                     taskId: 'task-2',
-                    workflowId: 'test-workflow',
+                    workflow: workflow,
                     taskType: 'dataAnalysis',
                     status: TaskStatus.Completed,
                     resultId: 'result-2',
