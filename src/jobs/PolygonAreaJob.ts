@@ -21,7 +21,7 @@ export class PolygonAreaJob implements Job {
 
 
         // Validate GeoJSON structure
-        if (!geometry.type || !geometry.coordinates) {
+        if (!geometry || !geometry.type || !geometry.coordinates) {
             throw new Error('Missing geoJson field');
         }
 

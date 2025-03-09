@@ -16,16 +16,18 @@ describe('PolygonAreaJob', () => {
             taskType: 'polygonArea',
             status: TaskStatus.InProgress,
             geoJson: JSON.stringify({
-                type: 'Polygon',
-                coordinates: [
-                    [
-                        [0, 0],
-                        [0, 1],
-                        [1, 1],
-                        [1, 0],
-                        [0, 0]
+                geometry: {
+                    type: 'Polygon',
+                    coordinates: [
+                        [
+                            [0, 0],
+                            [0, 1],
+                            [1, 1],
+                            [1, 0],
+                            [0, 0]
+                        ]
                     ]
-                ]
+                }
             }),
             progress: '',
             clientId: clientId,
@@ -56,27 +58,29 @@ describe('PolygonAreaJob', () => {
         it('should handle GeoJSON with multiple polygons', async () => {
             // Arrange
             mockTask.geoJson = JSON.stringify({
-                type: 'MultiPolygon',
-                coordinates: [
-                    [
+                geometry: {
+                    type: 'MultiPolygon',
+                    coordinates: [
                         [
-                            [0, 0],
-                            [0, 1],
-                            [1, 1],
-                            [1, 0],
-                            [0, 0]
-                        ]
-                    ],
-                    [
+                            [
+                                [0, 0],
+                                [0, 1],
+                                [1, 1],
+                                [1, 0],
+                                [0, 0]
+                            ]
+                        ],
                         [
-                            [2, 2],
-                            [2, 3],
-                            [3, 3],
-                            [3, 2],
-                            [2, 2]
+                            [
+                                [2, 2],
+                                [2, 3],
+                                [3, 3],
+                                [3, 2],
+                                [2, 2]
+                            ]
                         ]
                     ]
-                ]
+                }
             });
 
             // Act
@@ -121,8 +125,10 @@ describe('PolygonAreaJob', () => {
         it('should handle empty polygons gracefully', async () => {
             // Arrange
             mockTask.geoJson = JSON.stringify({
-                type: 'Polygon',
-                coordinates: []
+                geometry: {
+                    type: 'Polygon',
+                    coordinates: []
+                }
             });
 
             // Act & Assert

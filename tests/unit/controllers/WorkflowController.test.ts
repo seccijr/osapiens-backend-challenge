@@ -17,6 +17,7 @@ describe('WorkflowController', () => {
             getWorkflowStatus: jest.fn(),
             getWorkflowTasks: jest.fn(),
             getWorkflowResults: jest.fn(),
+            updateWorkflowFinalResult: jest.fn(),
         } as unknown as WorkflowService;
 
         mockRequest = {
@@ -41,12 +42,12 @@ describe('WorkflowController', () => {
                 status: WorkflowStatus.Completed,
                 finalResult: 'Sample workflow result data'
             } as Workflow;
-            
+
             (mockWorkflowService.getWorkflowById as jest.Mock).mockResolvedValue(completedWorkflow);
-            
+
             // Act
             await controller.getWorkflowResults(mockRequest, mockResponse);
-            
+
             // Assert
             expect(mockWorkflowService.getWorkflowById).toHaveBeenCalledWith('test-workflow-id');
             expect(mockResponse.status).toHaveBeenCalledWith(200);
@@ -60,10 +61,10 @@ describe('WorkflowController', () => {
         it('should return 404 when workflow is not found', async () => {
             // Arrange
             (mockWorkflowService.getWorkflowById as jest.Mock).mockResolvedValue(null);
-            
+
             // Act
             await controller.getWorkflowResults(mockRequest, mockResponse);
-            
+
             // Assert
             expect(mockWorkflowService.getWorkflowById).toHaveBeenCalledWith('test-workflow-id');
             expect(mockResponse.status).toHaveBeenCalledWith(404);
@@ -78,12 +79,12 @@ describe('WorkflowController', () => {
                 workflowId: 'test-workflow-id',
                 status: WorkflowStatus.Initial,
             } as Workflow;
-            
+
             (mockWorkflowService.getWorkflowById as jest.Mock).mockResolvedValue(pendingWorkflow);
-            
+
             // Act
             await controller.getWorkflowResults(mockRequest, mockResponse);
-            
+
             // Assert
             expect(mockWorkflowService.getWorkflowById).toHaveBeenCalledWith('test-workflow-id');
             expect(mockResponse.status).toHaveBeenCalledWith(400);
@@ -98,12 +99,12 @@ describe('WorkflowController', () => {
                 workflowId: 'test-workflow-id',
                 status: 'in_progress',
             } as Workflow;
-            
+
             (mockWorkflowService.getWorkflowById as jest.Mock).mockResolvedValue(inProgressWorkflow);
-            
+
             // Act
             await controller.getWorkflowResults(mockRequest, mockResponse);
-            
+
             // Assert
             expect(mockResponse.status).toHaveBeenCalledWith(400);
             expect(mockResponse.json).toHaveBeenCalledWith({
@@ -120,10 +121,10 @@ describe('WorkflowController', () => {
             } as Workflow;
 
             (mockWorkflowService.getWorkflowById as jest.Mock).mockResolvedValue(failedWorkflow);
-            
+
             // Act
             await controller.getWorkflowResults(mockRequest, mockResponse);
-            
+
             // Assert
             expect(mockResponse.status).toHaveBeenCalledWith(400);
             expect(mockResponse.json).toHaveBeenCalledWith({
@@ -138,12 +139,12 @@ describe('WorkflowController', () => {
                 status: WorkflowStatus.Completed,
                 finalResult: ''
             } as Workflow;
-            
+
             (mockWorkflowService.getWorkflowById as jest.Mock).mockResolvedValue(completedWorkflowEmptyResults);
-            
+
             // Act
             await controller.getWorkflowResults(mockRequest, mockResponse);
-            
+
             // Assert
             expect(mockResponse.status).toHaveBeenCalledWith(200);
             expect(mockResponse.json).toHaveBeenCalledWith({
@@ -157,10 +158,10 @@ describe('WorkflowController', () => {
             // Arrange
             const errorMessage = 'Database connection error';
             (mockWorkflowService.getWorkflowById as jest.Mock).mockRejectedValue(new Error(errorMessage));
-            
+
             // Act
             await controller.getWorkflowResults(mockRequest, mockResponse);
-            
+
             // Assert
             expect(mockResponse.status).toHaveBeenCalledWith(500);
             expect(mockResponse.json).toHaveBeenCalledWith({
