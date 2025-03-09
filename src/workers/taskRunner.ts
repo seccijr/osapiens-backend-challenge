@@ -1,11 +1,14 @@
-import { Repository } from 'typeorm';
-import { Task } from '../models/Task';
-import { getJobForTaskType } from '../jobs/JobFactory';
-import {WorkflowStatus} from "../workflows/WorkflowFactory";
-import {Workflow} from "../models/Workflow";
-import {Result} from "../models/Result";
+import { DataSource, Repository } from 'typeorm';
 
-export enum TaskStatus {
+import { Task } from '../models/Task';
+import { Result } from '../models/Result';
+import { Workflow } from '../models/Workflow';
+import { JobFactory } from '../factories/JobFactory';
+import { WorkflowStatus } from '../factories/WorkflowFactory';
+import { ResultFactory } from '../factories/ResultFactory';
+
+
+export const enum TaskStatus {
     Queued = 'queued',
     InProgress = 'in_progress',
     Completed = 'completed',
@@ -14,8 +17,12 @@ export enum TaskStatus {
 
 export class TaskRunner {
     constructor(
+        private workflowRepository: Repository<Workflow>,
+        private resultRepository: Repository<Result>,
         private taskRepository: Repository<Task>,
-    ) {}
+        private resultFactory: ResultFactory,
+        private jobFactory: JobFactory
+    ) { }
 
     /**
      * Runs the appropriate job based on the task's type, managing the task's status.
@@ -23,20 +30,22 @@ export class TaskRunner {
      * @throws If the job fails, it rethrows the error.
      */
     async run(task: Task): Promise<void> {
+        // Check and handle dependencies before running the task
+        if (task.dependency) {
+            const dependencyresult = await this.processDependency(task.dependency);
+            task.dependencyResultId = dependencyresult.resultId;
+        }
+
         task.status = TaskStatus.InProgress;
         task.progress = 'starting job...';
         await this.taskRepository.save(task);
-        const job = getJobForTaskType(task.taskType);
+
+        const job = this.jobFactory.createJobFromTaskType(task.taskType);
 
         try {
-            console.log(`Starting job ${task.taskType} for task ${task.taskId}...`);
-            const resultRepository = this.taskRepository.manager.getRepository(Result);
             const taskResult = await job.run(task);
-            console.log(`Job ${task.taskType} for task ${task.taskId} completed successfully.`);
-            const result = new Result();
-            result.taskId = task.taskId!;
-            result.data = JSON.stringify(taskResult || {});
-            await resultRepository.save(result);
+            const result = this.resultFactory.createResult(task.taskId!, JSON.stringify(taskResult || {}));
+            await this.resultRepository.save(result);
             task.resultId = result.resultId!;
             task.status = TaskStatus.Completed;
             task.progress = null;
@@ -52,8 +61,12 @@ export class TaskRunner {
             throw error;
         }
 
-        const workflowRepository = this.taskRepository.manager.getRepository(Workflow);
-        const currentWorkflow = await workflowRepository.findOne({ where: { workflowId: task.workflow.workflowId }, relations: ['tasks'] });
+        const currentWorkflow = await this.workflowRepository.findOne({
+            where: {
+                workflowId: task.workflow.workflowId
+            },
+            relations: ['tasks']
+        });
 
         if (currentWorkflow) {
             const allCompleted = currentWorkflow.tasks.every(t => t.status === TaskStatus.Completed);
@@ -67,7 +80,84 @@ export class TaskRunner {
                 currentWorkflow.status = WorkflowStatus.InProgress;
             }
 
-            await workflowRepository.save(currentWorkflow);
+            await this.workflowRepository.save(currentWorkflow);
         }
+    }
+
+    /**
+     * Processes a task dependency by checking its status and retrieving its output data
+     * @param dependency - The dependent task
+     * @returns The parsed output data from the dependent task
+     * @throws If the dependent task doesn't exist, failed, or hasn't completed
+     */
+    private async processDependency(dependency: Task): Promise<Result> {
+        // Get the latest status of the dependent task
+        let independentTask = await this.taskRepository.findOne({
+            where: { taskId: dependency.taskId }
+        });
+
+        if (!independentTask) {
+            throw new Error('Dependent task not found');
+        }
+
+        // Check status of dependency
+        if (independentTask.status === TaskStatus.Failed) {
+            throw new Error('Dependent task failed');
+        }
+
+        if (independentTask.status !== TaskStatus.Completed) {
+            // Wait for the dependency to complete
+            await this.waitForDependencyToComplete(independentTask.taskId);
+
+            // Get fresh data after waiting
+            independentTask = await this.taskRepository.findOne({
+                where: { taskId: dependency.taskId }
+            });
+
+            if (!independentTask || independentTask.status !== TaskStatus.Completed) {
+                throw new Error('Dependent task did not complete successfully');
+            }
+
+        }
+
+        const result = await this.resultRepository.findOne({
+            where: { resultId: independentTask.resultId }
+        });
+
+        return result!;
+    }
+
+    /**
+     * Waits for a dependency to complete by polling its status
+     * @param taskId - The ID of the dependent task
+     */
+    private async waitForDependencyToComplete(taskId: string): Promise<void> {
+        let attempts = 0;
+        const maxAttempts = 60; // Maximum number of attempts (can be adjusted)
+        const pollingInterval = 1000; // 1 second interval
+
+        while (attempts < maxAttempts) {
+            const independentTask = await this.taskRepository.findOne({
+                where: { taskId }
+            });
+
+            if (!independentTask) {
+                throw new Error('Dependent task not found');
+            }
+
+            if (independentTask.status === TaskStatus.Completed) {
+                return; // Dependency is complete, continue with the task
+            }
+
+            if (independentTask.status === TaskStatus.Failed) {
+                throw new Error('Dependent task failed');
+            }
+
+            // Wait before checking again
+            await new Promise(resolve => setTimeout(resolve, pollingInterval));
+            attempts++;
+        }
+
+        throw new Error('Timed out waiting for dependent task to complete');
     }
 }

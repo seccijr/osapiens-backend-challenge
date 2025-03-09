@@ -1,0 +1,10 @@
+.build/
+.vscode/
+assets/
+node_modules/
+typings-custom
+.prettierrc.json
+.env.example
+.gitignore
+README.md
+yarn.lock

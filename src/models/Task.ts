@@ -1,6 +1,7 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany } from 'typeorm';
 import { Workflow } from './Workflow';
-import {TaskStatus} from "../workers/taskRunner";
+import {TaskStatus} from '../workers/TaskRunner';
+
 
 @Entity({ name: 'tasks' })
 export class Task {
@@ -22,6 +23,9 @@ export class Task {
     @Column({ nullable: true })
     resultId?: string;
 
+    @Column({ nullable: true })
+    dependencyResultId?: string;
+
     @Column()
     taskType!: string;
 
@@ -30,4 +34,10 @@ export class Task {
 
     @ManyToOne(() => Workflow, workflow => workflow.tasks)
     workflow!: Workflow;
+
+    @ManyToOne(() => Task, task => task.dependents)
+    dependency?: Task;
+
+    @OneToMany(() => Task, task => task.dependency)
+    dependents?: Task[];
 }

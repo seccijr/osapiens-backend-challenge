@@ -238,7 +238,7 @@ Modify the system to support workflows with tasks that depend on the outputs of 
 
 1. Update the `Task` entity to include a `dependency` field that references another task
 2. Modify the `TaskRunner` to wait for dependent tasks to complete and pass their outputs as inputs to the current task.
-3. Extend the workflow YAML format to specify task dependencies (e.g., `dependsOn`).
+3. Extend the workflow YAML format to specify task dependencies (e.g., `dependency`).
 4. Update the `WorkflowFactory` to parse dependencies and create tasks accordingly.
 
 #### **Requirements:**
