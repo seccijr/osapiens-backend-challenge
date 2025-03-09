@@ -31,8 +31,17 @@ export class WorkflowController {
     async getWorkflowResults(req: Request, res: Response): Promise<void> {
         try {
             const workflowId = req.params.id;
-            const workflow = await this.workflowService.getWorkflowById(workflowId);
+            let workflow = await this.workflowService.getWorkflowById(workflowId);
 
+            if (!workflow) {
+                res.status(404).json({
+                    error: 'Workflow not found'
+                });
+                return;
+            }
+
+            await this.workflowService.updateWorkflowFinalResult(workflow);
+            workflow = await this.workflowService.getWorkflowById(workflowId);
             if (!workflow) {
                 res.status(404).json({
                     error: 'Workflow not found'

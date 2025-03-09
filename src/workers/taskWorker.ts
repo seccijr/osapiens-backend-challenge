@@ -17,24 +17,30 @@ export class TaskWorker {
     }
 
     pool = async () => {
-        this.stopFlag = true;
+        this.stopFlag = false;
         while (!this.stopFlag) {
-            const task = await this.taskRepository.findOne({
+            const tasks = await this.taskRepository.find({
                 where: { status: TaskStatus.Queued },
                 relations: ['workflow'] // Ensure workflow is loaded
             });
 
-            if (task) {
-                try {
-                    await this.taskRunner.run(task);
-                } catch (error) {
-                    console.error('Task execution failed. Task status has already been updated by TaskRunner.');
-                    console.error(error);
-                }
+            // Chunk tasks in batches of 10 task to avoid running all tasks at once
+            for (let i = 0; i < tasks.length; i += 10) {
+                const chunk = tasks.slice(i, i + 10);
+                await Promise.all(chunk.map(async (task) => {
+                    if (task) {
+                        try {
+                            await this.taskRunner.run(task);
+                        } catch (error) {
+                            console.error('Task execution failed. Task status has already been updated by TaskRunner.');
+                            console.error(error);
+                        }
+                    }
+                }));
             }
 
             // Wait before checking for the next task again
-            await new Promise(resolve => setTimeout(resolve, 5000));
+            await new Promise(resolve => setTimeout(resolve, 100));
         }
     }
 }

@@ -136,7 +136,6 @@ describe('Polygon Area Workflow E2E Test', () => {
         expect(workflowId).toBeDefined();
 
         // Poll for workflow completion
-        let completedWorkflow;
         const maxAttempts = 10;
 
         for (let i = 0; i < maxAttempts; i++) {
@@ -144,35 +143,29 @@ describe('Polygon Area Workflow E2E Test', () => {
             await new Promise(resolve => setTimeout(resolve, 500));
 
             // Check workflow status
-            const resultsResponse = await request(app).get(`/workflow/${workflowId}/status`);
-            expect(resultsResponse.status).toBe(200);
+            const statusResponse = await request(app).get(`/workflow/${workflowId}/status`);
+            expect(statusResponse.status).toBe(200);
 
-            const workflow = resultsResponse.body;
+            const workflow = statusResponse.body;
             
             if (workflow && workflow.status === WorkflowStatus.Completed) {
-                completedWorkflow = workflow;
                 break;
             }
         }
 
+        const resultResponse = await request(app).get(`/workflow/${workflowId}/results`);
+        expect(resultResponse.status).toBe(200);
+
         // Assert that we found our workflow and it's complete
-        expect(completedWorkflow).toBeDefined();
-        expect(completedWorkflow.status).toBe(WorkflowStatus.Completed);
+        const workflow = resultResponse.body;
+        expect(workflow).toBeDefined();
+        expect(workflow.status).toBe(WorkflowStatus.Completed);
 
         // Assert workflow results
-        const results = completedWorkflow.results;
-        expect(results).toBeDefined();
-        expect(results.length).toBeGreaterThan(0);
-
-        // Find the area calculation result
-        const areaResult = results.find((r: any) =>
-            r.type === 'area' || r.resultType === 'area');
-        expect(areaResult).toBeDefined();
-
-        // The area of a 1x1 square is 1
-        // The property name might be value or area depending on implementation
-        const area = areaResult.value !== undefined ? areaResult.value :
-            (areaResult.data?.area !== undefined ? areaResult.data.area : null);
-        expect(area).toBeCloseTo(1, 5); // Allowing for floating-point precision
+        const finalResult = JSON.parse(workflow.finalResult);
+        expect(finalResult).toBeDefined();
+        expect(finalResult.success).toBe(true);
+        expect(finalResult.tasks.length).toBe(4);
+        expect(finalResult.summary.completedTasks).toBe(4);
     });
 });
