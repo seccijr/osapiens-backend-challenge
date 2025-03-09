@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import express from 'express';
 
 import { AppDataSource } from './data-source';
-import defaultRoute from './routes/DefaultRoute';
+import defaultRoute from './routes/RootRoute';
 import { taskWorker } from './workers/TaskWorker';
 import analysisRoutes from './routes/AnalysisRoutes';
 
