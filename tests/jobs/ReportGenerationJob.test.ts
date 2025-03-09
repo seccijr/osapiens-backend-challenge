@@ -10,7 +10,6 @@ describe('ReportGenerationJob', () => {
     let mockTask: Task;
     let mockResultRepository: Repository<Result>;
     let mockTaskRepository: Repository<Task>;
-    let mockDataSource: DataSource;
 
     beforeEach(() => {
         mockResultRepository = {
@@ -23,20 +22,8 @@ describe('ReportGenerationJob', () => {
             findOne: jest.fn(),
         } as unknown as Repository<Task>;
 
-        mockDataSource = {
-            getRepository: jest.fn().mockImplementation((entity: EntityTarget<any>) => {
-                if (entity === Result) {
-                    return mockResultRepository;
-                }
-                if (entity === Task) {
-                    return mockTaskRepository;
-                }
-                throw new Error(`Repository not mocked for entity: ${entity}`);
-            })
-        } as unknown as DataSource;
 
-
-        job = new ReportGenerationJob(mockDataSource);
+        job = new ReportGenerationJob(mockResultRepository, mockTaskRepository);
 
         mockTask = {
             taskId: 'report-task-id',
