@@ -1,7 +1,7 @@
-import { Task } from '../../src/models/Task';
-import { TaskStatus } from '../../src/workers/TaskRunner';
-import { PolygonAreaJob } from '../../src/jobs/PolygonAreaJob';
-import { WorkflowStatus } from '../../src/factories/WorkflowFactory';
+import { Task } from '../../../src/models/Task';
+import { TaskStatus } from '../../../src/workers/TaskRunner';
+import { PolygonAreaJob } from '../../../src/jobs/PolygonAreaJob';
+import { WorkflowStatus } from '../../../src/factories/WorkflowFactory';
 
 describe('PolygonAreaJob', () => {
     let job: PolygonAreaJob;

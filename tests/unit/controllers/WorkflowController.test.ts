@@ -1,10 +1,9 @@
 import { Request, Response } from 'express';
 
-import { Task } from '../../src/models/Task';
-import { Workflow } from '../../src/models/Workflow';
-import { TaskStatus } from '../../src/workers/TaskRunner';
-import { WorkflowService } from '../../src/services/WorkflowService';
-import { WorkflowController } from '../../src/controllers/WorkflowController';
+import { Workflow } from '../../../src/models/Workflow';
+import { WorkflowService } from '../../../src/services/WorkflowService';
+import { WorkflowController } from '../../../src/controllers/WorkflowController';
+import { WorkflowStatus } from '../../../src/factories/WorkflowFactory';
 
 describe('WorkflowController', () => {
     let controller: WorkflowController;
@@ -38,8 +37,8 @@ describe('WorkflowController', () => {
         it('should return workflow results when workflow is completed', async () => {
             // Arrange
             const completedWorkflow = {
-                id: 'test-workflow-id',
-                status: 'completed',
+                workflowId: 'test-workflow-id',
+                status: WorkflowStatus.Completed,
                 finalResult: 'Sample workflow result data'
             } as Workflow;
             
@@ -76,9 +75,8 @@ describe('WorkflowController', () => {
         it('should return 400 when workflow is not completed', async () => {
             // Arrange
             const pendingWorkflow = {
-                id: 'test-workflow-id',
-                status: 'pending',
-                finalResult: null
+                workflowId: 'test-workflow-id',
+                status: WorkflowStatus.Initial,
             } as Workflow;
             
             (mockWorkflowService.getWorkflowById as jest.Mock).mockResolvedValue(pendingWorkflow);
@@ -97,9 +95,8 @@ describe('WorkflowController', () => {
         it('should return 400 when workflow is in progress', async () => {
             // Arrange
             const inProgressWorkflow = {
-                id: 'test-workflow-id',
+                workflowId: 'test-workflow-id',
                 status: 'in_progress',
-                finalResult: null
             } as Workflow;
             
             (mockWorkflowService.getWorkflowById as jest.Mock).mockResolvedValue(inProgressWorkflow);
@@ -117,12 +114,11 @@ describe('WorkflowController', () => {
         it('should return 400 when workflow is failed', async () => {
             // Arrange
             const failedWorkflow = {
-                id: 'test-workflow-id',
-                status: 'failed',
-                finalResult: null,
-                error: 'Some error occurred'
+                workflowId: 'test-workflow-id',
+                status: WorkflowStatus.Failed,
+                finalResult: 'Some error occurred'
             } as Workflow;
-            
+
             (mockWorkflowService.getWorkflowById as jest.Mock).mockResolvedValue(failedWorkflow);
             
             // Act
@@ -138,8 +134,8 @@ describe('WorkflowController', () => {
         it('should handle empty results for completed workflows', async () => {
             // Arrange
             const completedWorkflowEmptyResults = {
-                id: 'test-workflow-id',
-                status: 'completed',
+                workflowId: 'test-workflow-id',
+                status: WorkflowStatus.Completed,
                 finalResult: ''
             } as Workflow;
             

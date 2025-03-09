@@ -12,7 +12,48 @@ export class WorkflowService {
         private workflowRepository: Repository<Workflow>,
         private taskRepository: Repository<Task>,
         private resultRepository: Repository<Result>
-    ) {}
+    ) { }
+
+    /**
+     * Get a workflow by its ID
+     */
+    async getWorkflowById(workflowId: string): Promise<Workflow | null> {
+        return this.workflowRepository.findOne({
+            where: { workflowId }
+        });
+    }
+
+    /**
+     * Get workflow status
+     */
+    async getWorkflowStatus(workflowId: string): Promise<WorkflowStatus | null> {
+        const workflow = await this.getWorkflowById(workflowId);
+        return workflow ? workflow.status : null;
+    }
+
+    /**
+     * Get all tasks associated with a workflow
+     */
+    async getWorkflowTasks(workflowId: string): Promise<Task[]> {
+        return this.taskRepository.find({
+            where: { workflow: { workflowId } }
+        });
+    }
+
+    /**
+     * Get the final results of a workflow
+     */
+    async getWorkflowResults(workflowId: string): Promise<any | null> {
+        const workflow = await this.getWorkflowById(workflowId);
+        if (!workflow || !workflow.finalResult) {
+            return null;
+        }
+        try {
+            return JSON.parse(workflow.finalResult);
+        } catch (e) {
+            return workflow.finalResult; // Return as-is if not valid JSON
+        }
+    }
 
     /**
      * Updates the workflow with the final aggregated results from all tasks
@@ -64,7 +105,7 @@ export class WorkflowService {
 
         // Update the workflow with final result
         workflow.finalResult = JSON.stringify(finalResult);
-        
+
         // Update workflow status based on task results
         if (finalResult.success) {
             workflow.status = WorkflowStatus.Completed;

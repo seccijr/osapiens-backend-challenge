@@ -1,16 +1,16 @@
 import { Repository } from 'typeorm';
 
-import { Job } from '../../src/jobs/Job';
+import { Job } from '../../../src/jobs/Job';
 
-import { Task } from '../../src/models/Task';
-import { Workflow } from '../../src/models/Workflow';
+import { Task } from '../../../src/models/Task';
+import { Workflow } from '../../../src/models/Workflow';
 
-import { JobFactory } from '../../src/factories/JobFactory';
-import { WorkflowStatus } from '../../src/factories/WorkflowFactory';
+import { JobFactory } from '../../../src/factories/JobFactory';
+import { WorkflowStatus } from '../../../src/factories/WorkflowFactory';
 
-import { TaskRunner, TaskStatus } from '../../src/workers/TaskRunner';
-import { Result } from '../../src/models/Result';
-import { ResultFactory } from '../../src/factories/ResultFactory';
+import { TaskRunner, TaskStatus } from '../../../src/workers/TaskRunner';
+import { Result } from '../../../src/models/Result';
+import { ResultFactory } from '../../../src/factories/ResultFactory';
 
 describe('TaskRunner with dependencies', () => {
     const clientId = 'test-client-id';

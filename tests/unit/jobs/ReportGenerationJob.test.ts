@@ -1,9 +1,9 @@
 import { Repository } from 'typeorm';
 
-import { Task } from '../../src/models/Task';
-import { Result } from '../../src/models/Result';
-import { TaskStatus } from '../../src/workers/TaskRunner';
-import { ReportGenerationJob } from '../../src/jobs/ReportGenerationJob'
+import { Task } from '../../../src/models/Task';
+import { Result } from '../../../src/models/Result';
+import { TaskStatus } from '../../../src/workers/TaskRunner';
+import { ReportGenerationJob } from '../../../src/jobs/ReportGenerationJob'
 
 describe('ReportGenerationJob', () => {
     let job: ReportGenerationJob;

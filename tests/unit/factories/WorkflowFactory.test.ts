@@ -1,9 +1,9 @@
 import * as fs from 'fs';
 import { Repository } from 'typeorm';
 
-import { Task } from '../../src/models/Task';
-import { Workflow } from '../../src/models/Workflow';
-import { WorkflowFactory } from '../../src/factories/WorkflowFactory';
+import { Task } from '../../../src/models/Task';
+import { Workflow } from '../../../src/models/Workflow';
+import { WorkflowFactory } from '../../../src/factories/WorkflowFactory';
 
 jest.mock('fs');
 

@@ -43,9 +43,7 @@ export class TaskRunner {
         const job = this.jobFactory.createJobFromTaskType(task.taskType);
 
         try {
-            console.log(`Starting job ${task.taskType} for task ${task.taskId}...`);
             const taskResult = await job.run(task);
-            console.log(`Job ${task.taskType} for task ${task.taskId} completed successfully.`);
             const result = this.resultFactory.createResult(task.taskId!, JSON.stringify(taskResult || {}));
             await this.resultRepository.save(result);
             task.resultId = result.resultId!;
