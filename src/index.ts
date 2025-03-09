@@ -14,7 +14,7 @@ import { JobFactory } from './factories/JobFactory';
 import { WorkflowFactory } from './factories/WorkflowFactory';
 
 import { createRootRouter } from './routes/RootRoute';
-import { createAnalysisRouter } from './routes/AnalysisRoutes';
+import { createAnalysisRouter } from './routes/WorkflowRoutes';
 
 
 // Dependency resolution
