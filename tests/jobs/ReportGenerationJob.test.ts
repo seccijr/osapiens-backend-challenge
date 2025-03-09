@@ -1,4 +1,4 @@
-import { DataSource, EntityTarget, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 
 import { Task } from '../../src/models/Task';
 import { Result } from '../../src/models/Result';

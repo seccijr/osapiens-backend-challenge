@@ -20,7 +20,7 @@ export class JobFactory {
         private resultRepository: Repository<Result>, private taskRepository: Repository<Task>
     ) { }
 
-    getJobForTaskType = (taskType: string): Job => {
+    createJobFromTaskType = (taskType: string): Job => {
         const jobFactory = jobMap[taskType];
         if (!jobFactory) {
             throw new Error(`No job found for task type: ${taskType}`);

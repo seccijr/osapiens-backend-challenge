@@ -15,6 +15,7 @@ import { WorkflowFactory } from './factories/WorkflowFactory';
 
 import { createRootRouter } from './routes/RootRoute';
 import { createAnalysisRouter } from './routes/WorkflowRoutes';
+import { ResultFactory } from './factories/ResultFactory';
 
 
 // Dependency resolution
@@ -24,7 +25,15 @@ const workflowsRepository = AppDataSource.getRepository(Workflow);
 const workflowFactory = new WorkflowFactory(workflowsRepository, tasksRepository);
 
 const jobFactory = new JobFactory(resultsRepository, tasksRepository);
-const taskRunner = new TaskRunner(tasksRepository, jobFactory);
+const resulFactory = new ResultFactory();
+
+const taskRunner = new TaskRunner(
+    workflowsRepository,
+    resultsRepository,
+    tasksRepository,
+    resulFactory,
+    jobFactory
+);
 const taskWorker = new TaskWorker(taskRunner, tasksRepository);
 
 

@@ -23,6 +23,9 @@ export class Task {
     @Column({ nullable: true })
     resultId?: string;
 
+    @Column({ nullable: true })
+    dependencyResultId?: string;
+
     @Column()
     taskType!: string;
 
