@@ -33,7 +33,7 @@ describe('TaskRunner with dependencies', () => {
         } as unknown as JobFactory;
 
         mockResultFactory = {
-            createResult: jest.fn().mockImplementation((taskId, data) => Promise.resolve({})),
+            createResult: jest.fn().mockImplementation(() => Promise.resolve({})),
         } as unknown as ResultFactory;
 
         mockTaskRepository = {

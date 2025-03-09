@@ -16,6 +16,7 @@ export const enum WorkflowStatus {
 interface WorkflowStep {
     taskType: string;
     stepNumber: number;
+    dependency?: number; // Added to support task dependencies
 }
 
 interface WorkflowDefinition {
@@ -47,7 +48,25 @@ export class WorkflowFactory {
 
         const savedWorkflow = await this.workflowRepository.save(workflow);
 
-        const tasks: Task[] = workflowDef.steps.map(step => {
+        // Store the saved tasks by their step number to resolve dependencies
+        const existentTasks = new Map<number, boolean>();
+        const savedTasks = new Map<number, Task>();
+
+        // Process steps in order to properly handle dependencies
+        const sortedSteps = [...workflowDef.steps].sort((a, b) => a.stepNumber - b.stepNumber);
+
+        // Check if dependencies are valid
+        for (const step of sortedSteps) {
+            if (step.dependency !== undefined) {
+                const independentTask = existentTasks.get(step.dependency);
+                if (!independentTask) {
+                    throw new Error('Invalid dependency reference');
+                }
+            }
+            existentTasks.set(step.stepNumber, true);
+        }
+
+        for (const step of sortedSteps) {
             const task = new Task();
             task.clientId = clientId;
             task.geoJson = geoJson;
@@ -55,10 +74,20 @@ export class WorkflowFactory {
             task.taskType = step.taskType;
             task.stepNumber = step.stepNumber;
             task.workflow = savedWorkflow;
-            return task;
-        });
 
-        await this.taskRepository.save(tasks);
+            // Set dependency if specified
+            if (step.dependency !== undefined) {
+                const independentTask = savedTasks.get(step.dependency);
+                if (!independentTask) {
+                    throw new Error('Invalid dependency reference');
+                }
+                task.dependency = independentTask;
+            }
+
+            // Save the task and store it for potential future dependencies
+            const savedTask = await this.taskRepository.save(task);
+            savedTasks.set(step.stepNumber, savedTask);
+        }
 
         return savedWorkflow;
     }

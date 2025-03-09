@@ -1,13 +1,15 @@
 import * as fs from 'fs';
 import { Repository } from 'typeorm';
 
-import { Task } from '../../models/Task';
-import { Workflow } from '../../models/Workflow';
-import { WorkflowFactory } from '../../workflows/WorkflowFactory';
+import { Task } from '../../src/models/Task';
+import { Workflow } from '../../src/models/Workflow';
+import { WorkflowFactory } from '../../src/factories/WorkflowFactory';
 
 jest.mock('fs');
 
 describe('WorkflowFactory with dependencies', () => {
+    const clientId = 'client-id';
+    const geoJson = '{"type": "FeatureCollection", "features": []}';
     let workflowFactory: WorkflowFactory;
     let mockTaskRepository: Repository<Task>;
     let mockWorkflowRepository: Repository<Workflow>;
@@ -29,7 +31,7 @@ describe('WorkflowFactory with dependencies', () => {
         );
     });
 
-    describe('createWorkflowFromYaml', () => {
+    describe('createWorkflowFromYAML', () => {
         it('should parse task dependencies from YAML', async () => {
             // Arrange
             const yamlContent = `
@@ -44,11 +46,22 @@ describe('WorkflowFactory with dependencies', () => {
             stepNumber: 3
             dependency: 2
       `;
+            const task1Result = { taskId: 'task-1', taskType: 'analysis', stepNumber: 1 };
+            const task2Result = { taskId: 'task-2', taskType: 'polygonArea', stepNumber: 2 };
+            const task3Result = { taskId: 'task-3', taskType: 'reportGeneration', stepNumber: 3 };
 
             (fs.readFileSync as jest.Mock).mockReturnValue(yamlContent);
+            (mockTaskRepository.save as jest.Mock)
+                .mockImplementation((task) => {
+                    const stepNumber = task.stepNumber;
+                    if (stepNumber === 1) return Promise.resolve(task1Result);
+                    if (stepNumber === 2) return Promise.resolve(task2Result);
+                    if (stepNumber === 3) return Promise.resolve(task3Result);
+                    return Promise.resolve(null);
+                });
 
             // Act
-            const workflow = await workflowFactory.createWorkflowFromYaml('workflow.yml');
+            const workflow = await workflowFactory.createWorkflowFromYAML('workflow.yml', clientId, geoJson);
 
             // Assert
             expect(mockWorkflowRepository.save).toHaveBeenCalled();
@@ -57,8 +70,8 @@ describe('WorkflowFactory with dependencies', () => {
             // Verify the dependencies were set correctly
             const saveArgs = (mockTaskRepository.save as jest.Mock).mock.calls;
             expect(saveArgs[0][0].dependency).toBeUndefined();
-            expect(saveArgs[1][0].dependency).toBe('task-id'); // Second task depends on first task
-            expect(saveArgs[2][0].dependency).toBe('task-id'); // Third task depends on second task
+            expect(saveArgs[1][0].dependency.taskId).toBe('task-1'); // Second task depends on first task
+            expect(saveArgs[2][0].dependency.taskId).toBe('task-2'); // Third task depends on second task
         });
 
         it('should handle missing dependencies gracefully', async () => {
@@ -77,7 +90,7 @@ describe('WorkflowFactory with dependencies', () => {
             (fs.readFileSync as jest.Mock).mockReturnValue(yamlContent);
 
             // Act
-            const workflow = await workflowFactory.createWorkflowFromYaml('workflow.yml');
+            const workflow = await workflowFactory.createWorkflowFromYAML('workflow.yml', clientId, geoJson);
 
             // Assert
             expect(mockWorkflowRepository.save).toHaveBeenCalled();
@@ -105,7 +118,7 @@ describe('WorkflowFactory with dependencies', () => {
             (fs.readFileSync as jest.Mock).mockReturnValue(yamlContent);
 
             // Act & Assert
-            await expect(workflowFactory.createWorkflowFromYaml('workflow.yml'))
+            await expect(workflowFactory.createWorkflowFromYAML('workflow.yml', clientId, geoJson))
                 .rejects.toThrow('Invalid dependency reference');
         });
     });
