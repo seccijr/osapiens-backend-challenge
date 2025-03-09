@@ -1,6 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
 import { Workflow } from './Workflow';
-import {TaskStatus} from "../workers/TaskRunner";
+import {TaskStatus} from '../workers/TaskRunner';
+
 
 @Entity({ name: 'tasks' })
 export class Task {

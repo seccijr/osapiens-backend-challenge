@@ -1,33 +1,41 @@
 import { Task } from '../../src/models/Task';
 import { TaskStatus } from '../../src/workers/TaskRunner';
 import { PolygonAreaJob } from '../../src/jobs/PolygonAreaJob';
+import { WorkflowStatus } from '../../src/factories/WorkflowFactory';
 
 describe('PolygonAreaJob', () => {
     let job: PolygonAreaJob;
     let mockTask: Task;
 
     beforeEach(() => {
+        const clientId = 'test-client-id';
         job = new PolygonAreaJob();
         mockTask = {
             taskId: 'test-task-id',
             workflowId: 'test-workflow-id',
             taskType: 'polygonArea',
             status: TaskStatus.InProgress,
-            data: JSON.stringify({
-                geoJson: {
-                    type: 'Polygon',
-                    coordinates: [
-                        [
-                            [0, 0],
-                            [0, 1],
-                            [1, 1],
-                            [1, 0],
-                            [0, 0]
-                        ]
+            geoJson: JSON.stringify({
+                type: 'Polygon',
+                coordinates: [
+                    [
+                        [0, 0],
+                        [0, 1],
+                        [1, 1],
+                        [1, 0],
+                        [0, 0]
                     ]
-                }
+                ]
             }),
             progress: '',
+            clientId: clientId,
+            stepNumber: 1,
+            workflow: {
+                workflowId: 'test-workflow-id',
+                clientId: clientId,
+                status: WorkflowStatus.Initial,
+                tasks: []
+            }
         } as Task;
     });
 
@@ -47,30 +55,28 @@ describe('PolygonAreaJob', () => {
 
         it('should handle GeoJSON with multiple polygons', async () => {
             // Arrange
-            mockTask.data = JSON.stringify({
-                geoJson: {
-                    type: 'MultiPolygon',
-                    coordinates: [
+            mockTask.geoJson = JSON.stringify({
+                type: 'MultiPolygon',
+                coordinates: [
+                    [
                         [
-                            [
-                                [0, 0],
-                                [0, 1],
-                                [1, 1],
-                                [1, 0],
-                                [0, 0]
-                            ]
-                        ],
+                            [0, 0],
+                            [0, 1],
+                            [1, 1],
+                            [1, 0],
+                            [0, 0]
+                        ]
+                    ],
+                    [
                         [
-                            [
-                                [2, 2],
-                                [2, 3],
-                                [3, 3],
-                                [3, 2],
-                                [2, 2]
-                            ]
+                            [2, 2],
+                            [2, 3],
+                            [3, 3],
+                            [3, 2],
+                            [2, 2]
                         ]
                     ]
-                }
+                ]
             });
 
             // Act
@@ -85,11 +91,9 @@ describe('PolygonAreaJob', () => {
 
         it('should throw an error for invalid GeoJSON', async () => {
             // Arrange
-            mockTask.data = JSON.stringify({
-                geoJson: {
-                    type: 'Invalid',
-                    coordinates: []
-                }
+            mockTask.geoJson = JSON.stringify({
+                type: 'Invalid',
+                coordinates: []
             });
 
             // Act & Assert
@@ -98,7 +102,7 @@ describe('PolygonAreaJob', () => {
 
         it('should throw an error when geoJson field is missing', async () => {
             // Arrange
-            mockTask.data = JSON.stringify({
+            mockTask.geoJson = JSON.stringify({
                 someOtherField: 'value'
             });
 
@@ -108,7 +112,7 @@ describe('PolygonAreaJob', () => {
 
         it('should throw an error when task data is not valid JSON', async () => {
             // Arrange
-            mockTask.data = 'not-valid-json';
+            mockTask.geoJson = 'not-valid-json';
 
             // Act & Assert
             await expect(job.run(mockTask)).rejects.toThrow();
@@ -116,11 +120,9 @@ describe('PolygonAreaJob', () => {
 
         it('should handle empty polygons gracefully', async () => {
             // Arrange
-            mockTask.data = JSON.stringify({
-                geoJson: {
-                    type: 'Polygon',
-                    coordinates: []
-                }
+            mockTask.geoJson = JSON.stringify({
+                type: 'Polygon',
+                coordinates: []
             });
 
             // Act & Assert

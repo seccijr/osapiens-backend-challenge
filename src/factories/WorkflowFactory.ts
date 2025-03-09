@@ -4,9 +4,9 @@ import { DataSource } from 'typeorm';
 
 import { Task } from '../models/Task';
 import { Workflow } from '../models/Workflow';
-import { TaskStatus } from "../workers/TaskRunner";
+import { TaskStatus } from '../workers/TaskRunner';
 
-export enum WorkflowStatus {
+export const enum WorkflowStatus {
     Initial = 'initial',
     InProgress = 'in_progress',
     Completed = 'completed',

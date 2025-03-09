@@ -15,7 +15,6 @@ export async function taskWorker() {
         if (task) {
             try {
                 await taskRunner.run(task);
-
             } catch (error) {
                 console.error('Task execution failed. Task status has already been updated by TaskRunner.');
                 console.error(error);

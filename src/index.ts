@@ -1,14 +1,15 @@
-import "reflect-metadata";
-import express from "express";
-import analysisRoutes from "./routes/AnalysisRoutes";
-import defaultRoute from "./routes/DefaultRoute";
-import { taskWorker } from "./workers/TaskWorker";
-import { AppDataSource } from "./data-source"; // Import the DataSource instance
+import 'reflect-metadata';
+import express from 'express';
+
+import { AppDataSource } from './data-source';
+import defaultRoute from './routes/DefaultRoute';
+import { taskWorker } from './workers/TaskWorker';
+import analysisRoutes from './routes/AnalysisRoutes';
 
 const app = express();
 app.use(express.json());
-app.use("/analysis", analysisRoutes);
-app.use("/", defaultRoute);
+app.use('/analysis', analysisRoutes);
+app.use('/', defaultRoute);
 
 AppDataSource.initialize()
   .then(() => {
@@ -16,7 +17,7 @@ AppDataSource.initialize()
     taskWorker();
 
     app.listen(3000, () => {
-      console.log("Server is running at http://localhost:3000");
+      console.log('Server is running at http://localhost:3000');
     });
   })
   .catch((error) => console.log(error));
