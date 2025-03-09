@@ -1,4 +1,4 @@
-import { DataSource, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 
 import { Job } from './Job';
 import { Task } from '../models/Task';
@@ -6,15 +6,11 @@ import { Result } from '../models/Result';
 import { TaskStatus } from '../workers/TaskRunner';
 
 export class ReportGenerationJob implements Job {
-    private resultRepository: Repository<Result>;
-    private taskRepository: Repository<Task>;
 
     constructor(
-        private dataSource: DataSource
-    ) {
-        this.resultRepository = this.dataSource.getRepository(Result);
-        this.taskRepository = this.dataSource.getRepository(Task);
-    }
+        private resultRepository: Repository<Result>,
+        private taskRepository: Repository<Task>
+    ) { }
 
     async run(task: Task): Promise<any> {
         if (!task.workflow || !task.workflow.workflowId) {

@@ -1,26 +1,30 @@
-import { DataSource } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 
 import { Job } from '../jobs/Job';
 import { PolygonAreaJob } from '../jobs/PolygonAreaJob';
 import { DataAnalysisJob } from '../jobs/DataAnalysisJob';
 import { EmailNotificationJob } from '../jobs/EmailNotificationJob';
 import { ReportGenerationJob } from '../jobs/ReportGenerationJob';
+import { Result } from '../models/Result';
+import { Task } from '../models/Task';
 
-const jobMap: Record<string, (dataSource: DataSource) => Job> = {
-    'analysis': (dataSource: DataSource) => new DataAnalysisJob(),
-    'notification': (dataSource: DataSource) => new EmailNotificationJob(),
-    'polygon_area': (dataSource: DataSource) => new PolygonAreaJob(),
-    'report_generation': (dataSource: DataSource) => new ReportGenerationJob(dataSource),
+const jobMap: Record<string, (resultRepository: Repository<Result>, taskRepository: Repository<Task>) => Job> = {
+    'analysis': () => new DataAnalysisJob(),
+    'notification': () => new EmailNotificationJob(),
+    'polygon_area': () => new PolygonAreaJob(),
+    'report_generation': (resultRepository: Repository<Result>, taskRepository: Repository<Task>) => new ReportGenerationJob(resultRepository, taskRepository),
 };
 
-export class WorkflowFactory {
-    constructor(private dataSource: DataSource) { }
+export class JobFactory {
+    constructor(
+        private resultRepository: Repository<Result>, private taskRepository: Repository<Task>
+    ) { }
 
     getJobForTaskType = (taskType: string): Job => {
         const jobFactory = jobMap[taskType];
         if (!jobFactory) {
             throw new Error(`No job found for task type: ${taskType}`);
         }
-        return jobFactory(this.dataSource);
+        return jobFactory(this.resultRepository, this.taskRepository);
     }
 }

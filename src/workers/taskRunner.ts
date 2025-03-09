@@ -1,9 +1,11 @@
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
+
 import { Task } from '../models/Task';
-import { getJobForTaskType } from '../factories/JobFactory';
-import { WorkflowStatus } from '../factories/WorkflowFactory';
-import { Workflow } from '../models/Workflow';
 import { Result } from '../models/Result';
+import { Workflow } from '../models/Workflow';
+import { JobFactory } from '../factories/JobFactory';
+import { WorkflowStatus } from '../factories/WorkflowFactory';
+
 
 export const enum TaskStatus {
     Queued = 'queued',
@@ -15,6 +17,7 @@ export const enum TaskStatus {
 export class TaskRunner {
     constructor(
         private taskRepository: Repository<Task>,
+        private jobFactory: JobFactory
     ) { }
 
     /**
@@ -26,7 +29,8 @@ export class TaskRunner {
         task.status = TaskStatus.InProgress;
         task.progress = 'starting job...';
         await this.taskRepository.save(task);
-        const job = getJobForTaskType(task.taskType);
+
+        const job = this.jobFactory.getJobForTaskType(task.taskType);
 
         try {
             console.log(`Starting job ${task.taskType} for task ${task.taskId}...`);

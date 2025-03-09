@@ -1,11 +1,11 @@
 import { Repository } from 'typeorm';
 
-import { Job } from '../../jobs/Job';
-import { Task } from '../../models/Task';
-import * as JobFactory from '../../jobs/JobFactory';
-import { TaskRunner, TaskStatus } from '../../workers/TaskRunner';
+import { Job } from '../../src/jobs/Job';
+import { Task } from '../../src/models/Task';
+import * as JobFactory from '../../src/factories/JobFactory';
+import { TaskRunner, TaskStatus } from '../../src/workers/TaskRunner';
 
-jest.mock('../../jobs/JobFactory');
+jest.mock('../../src/factories/JobFactory');
 
 describe('TaskRunner with dependencies', () => {
     let taskRunner: TaskRunner;
@@ -44,7 +44,7 @@ describe('TaskRunner with dependencies', () => {
 
             const task = {
                 taskId: 'task-id',
-                dependsOn: 'dependent-task',
+                dependency: 'dependent-task',
                 status: TaskStatus.Queued,
             } as Task;
 
@@ -72,7 +72,7 @@ describe('TaskRunner with dependencies', () => {
 
             const task = {
                 taskId: 'task-id',
-                dependsOn: 'dependent-task',
+                dependency: 'dependent-task',
                 status: TaskStatus.Queued,
             } as Task;
 
@@ -91,7 +91,7 @@ describe('TaskRunner with dependencies', () => {
 
             const task = {
                 taskId: 'task-id',
-                dependsOn: 'dependent-task',
+                dependency: 'dependent-task',
                 status: TaskStatus.Queued,
             } as Task;
 
@@ -105,7 +105,7 @@ describe('TaskRunner with dependencies', () => {
             // Arrange
             const task = {
                 taskId: 'task-id',
-                dependsOn: 'non-existent-task',
+                dependency: 'non-existent-task',
                 status: TaskStatus.Queued,
             } as Task;
 

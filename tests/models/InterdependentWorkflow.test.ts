@@ -39,10 +39,10 @@ describe('WorkflowFactory with dependencies', () => {
             stepNumber: 1
           - taskType: "polygonArea"
             stepNumber: 2
-            dependsOn: 1
+            dependency: 1
           - taskType: "reportGeneration"
             stepNumber: 3
-            dependsOn: 2
+            dependency: 2
       `;
 
             (fs.readFileSync as jest.Mock).mockReturnValue(yamlContent);
@@ -56,9 +56,9 @@ describe('WorkflowFactory with dependencies', () => {
 
             // Verify the dependencies were set correctly
             const saveArgs = (mockTaskRepository.save as jest.Mock).mock.calls;
-            expect(saveArgs[0][0].dependsOn).toBeUndefined();
-            expect(saveArgs[1][0].dependsOn).toBe('task-id'); // Second task depends on first task
-            expect(saveArgs[2][0].dependsOn).toBe('task-id'); // Third task depends on second task
+            expect(saveArgs[0][0].dependency).toBeUndefined();
+            expect(saveArgs[1][0].dependency).toBe('task-id'); // Second task depends on first task
+            expect(saveArgs[2][0].dependency).toBe('task-id'); // Third task depends on second task
         });
 
         it('should handle missing dependencies gracefully', async () => {
@@ -85,9 +85,9 @@ describe('WorkflowFactory with dependencies', () => {
 
             // Verify no dependencies were set
             const saveArgs = (mockTaskRepository.save as jest.Mock).mock.calls;
-            expect(saveArgs[0][0].dependsOn).toBeUndefined();
-            expect(saveArgs[1][0].dependsOn).toBeUndefined();
-            expect(saveArgs[2][0].dependsOn).toBeUndefined();
+            expect(saveArgs[0][0].dependency).toBeUndefined();
+            expect(saveArgs[1][0].dependency).toBeUndefined();
+            expect(saveArgs[2][0].dependency).toBeUndefined();
         });
 
         it('should throw an error for invalid dependency reference', async () => {
@@ -99,7 +99,7 @@ describe('WorkflowFactory with dependencies', () => {
             stepNumber: 1
           - taskType: "polygonArea"
             stepNumber: 2
-            dependsOn: 5 # Invalid step number
+            dependency: 5 # Invalid step number
       `;
 
             (fs.readFileSync as jest.Mock).mockReturnValue(yamlContent);
