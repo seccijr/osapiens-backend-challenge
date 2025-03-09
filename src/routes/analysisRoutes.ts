@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { AppDataSource } from '../data-source';
-import { WorkflowFactory } from '../workflows/WorkflowFactory'; // Create a folder for factories if you prefer
+import { WorkflowFactory } from '../factories/WorkflowFactory'; // Create a folder for factories if you prefer
 import path from 'path';
 
 const router = Router();

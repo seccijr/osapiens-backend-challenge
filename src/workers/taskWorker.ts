@@ -1,6 +1,6 @@
-import {AppDataSource} from '../data-source';
-import {Task} from '../models/Task';
-import {TaskRunner, TaskStatus} from './taskRunner';
+import { AppDataSource } from '../data-source';
+import { Task } from '../models/Task';
+import { TaskRunner, TaskStatus } from './TaskRunner';
 
 export async function taskWorker() {
     const taskRepository = AppDataSource.getRepository(Task);

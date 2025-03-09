@@ -1,8 +1,8 @@
 import "reflect-metadata";
 import express from "express";
-import analysisRoutes from "./routes/analysisRoutes";
-import defaultRoute from "./routes/defaultRoute";
-import { taskWorker } from "./workers/taskWorker";
+import analysisRoutes from "./routes/AnalysisRoutes";
+import defaultRoute from "./routes/DefaultRoute";
+import { taskWorker } from "./workers/TaskWorker";
 import { AppDataSource } from "./data-source"; // Import the DataSource instance
 
 const app = express();
