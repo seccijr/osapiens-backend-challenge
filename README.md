@@ -43,7 +43,7 @@ A robust backend system for handling asynchronous workflows and tasks with suppo
 
 - **Task & Workflow Entities**: Managed with TypeORM
 - **WorkflowFactory**: Creates workflows from YAML configurations
-- **TaskRunner**: Executes jobs and manages task/workflow states
+- **TaskService**: Executes jobs and manages task/workflow states
 - **Background Worker**: Processes queued tasks asynchronously
 - **Dependency Support**: Tasks can depend on outputs from earlier tasks
 - **Final Result Aggregation**: Collects and saves final workflow results
@@ -177,7 +177,7 @@ curl -X GET http://localhost:3000/workflow/3433c76d-f226-4c91-afb5-7dfc7accab24/
 yarn test
 ```
 
-This command runs all unit tests using Jest, covering individual components like TaskRunner, WorkflowFactory, and job implementations.
+This command runs all unit tests using Jest, covering individual components like TaskService, WorkflowFactory, and job implementations.
 
 ### Running E2E Tests
 
@@ -273,7 +273,6 @@ src/
 │
 ├─ workers/
 │   ├─ TaskWorker.ts     # Background worker that polls for queued tasks
-│   ├─ TaskRunner.ts     # Executes jobs and manages task states
 │
 ├─ factories/
 │   ├─ JobFactory.ts     # Creates appropriate job instances
@@ -290,6 +289,7 @@ src/
 │
 ├─ services/
 │   ├─ WorkflowService.ts   # Business logic for workflows
+│   ├─ TaskService.ts     # Executes jobs and manages task states
 │
 ├─ data-source.ts        # TypeORM database configuration
 ├─ index.ts              # Application entry point

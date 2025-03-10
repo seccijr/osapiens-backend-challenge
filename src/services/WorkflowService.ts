@@ -4,7 +4,7 @@ import { Task } from '../models/Task';
 import { Result } from '../models/Result';
 import { Workflow } from '../models/Workflow';
 
-import { TaskStatus } from '../workers/TaskRunner';
+import { TaskStatus } from './TaskService';
 import { WorkflowStatus } from '../factories/WorkflowFactory';
 
 export class WorkflowService {

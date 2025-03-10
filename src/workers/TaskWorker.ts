@@ -1,14 +1,14 @@
 import { Repository } from 'typeorm';
 
 import { Task } from '../models/Task';
-import { TaskRunner, TaskStatus } from './TaskRunner';
+import { TaskService, TaskStatus } from '../services/TaskService';
 
 
 export class TaskWorker {
     private stopFlag = false;
 
     constructor(
-        private taskRunner: TaskRunner,
+        private taskService: TaskService,
         private taskRepository: Repository<Task>
     ) { }
 
@@ -30,9 +30,9 @@ export class TaskWorker {
                 await Promise.all(chunk.map(async (task) => {
                     if (task) {
                         try {
-                            await this.taskRunner.run(task);
+                            await this.taskService.run(task);
                         } catch (error) {
-                            console.error('Task execution failed. Task status has already been updated by TaskRunner.');
+                            console.error('Task execution failed. Task status has already been updated by TaskService.');
                             console.error(error);
                         }
                     }

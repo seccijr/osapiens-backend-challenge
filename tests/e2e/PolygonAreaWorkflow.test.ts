@@ -12,12 +12,14 @@ import { Workflow } from '../../src/models/Workflow';
 
 // Import workers, factories, services, controllers
 import { TaskWorker } from '../../src/workers/TaskWorker';
-import { TaskRunner } from '../../src/workers/TaskRunner';
-import { JobFactory } from '../../src/factories/JobFactory';
-import { WorkflowFactory, WorkflowStatus } from '../../src/factories/WorkflowFactory';
-import { ResultFactory } from '../../src/factories/ResultFactory';
-import { WorkflowService } from '../../src/services/WorkflowService';
 import { WorkflowController } from '../../src/controllers/WorkflowController';
+
+import { JobFactory } from '../../src/factories/JobFactory';
+import { ResultFactory } from '../../src/factories/ResultFactory';
+import { WorkflowFactory, WorkflowStatus } from '../../src/factories/WorkflowFactory';
+
+import { TaskService } from '../../src/services/TaskService';
+import { WorkflowService } from '../../src/services/WorkflowService';
 
 // Import routes
 import { createRootRouter } from '../../src/routes/RootRoute';
@@ -63,7 +65,7 @@ describe('Polygon Area Workflow E2E Test', () => {
         const jobFactory = new JobFactory(resultsRepository, tasksRepository);
         const resultFactory = new ResultFactory();
 
-        const taskRunner = new TaskRunner(
+        const taskRunner = new TaskService(
             workflowsRepository,
             resultsRepository,
             tasksRepository,
@@ -79,11 +81,11 @@ describe('Polygon Area Workflow E2E Test', () => {
             resultsRepository
         );
 
-        const workflowController = new WorkflowController(workflowService);
+        const workflowController = new WorkflowController(workflowService, workflowFactory);
 
         // Set up routes
         app.use('/', createRootRouter());
-        app.use('/analysis', createAnalysisRouter(workflowFactory));
+        app.use('/analysis', createAnalysisRouter(workflowController));
         app.use('/workflow', createWorkflowRouter(workflowController));
 
         // Start task worker

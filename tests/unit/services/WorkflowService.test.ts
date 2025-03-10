@@ -3,7 +3,7 @@ import { Repository } from 'typeorm';
 import { Task } from '../../../src/models/Task';
 import { Result } from '../../../src/models/Result';
 import { Workflow } from '../../../src/models/Workflow';
-import { TaskStatus } from '../../../src/workers/TaskRunner';
+import { TaskStatus } from '../../../src/services/TaskService';
 import { WorkflowService } from '../../../src/services/WorkflowService';
 
 describe('WorkflowService', () => {

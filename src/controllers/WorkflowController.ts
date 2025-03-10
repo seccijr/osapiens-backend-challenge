@@ -1,9 +1,14 @@
+import path from 'path';
 import { Request, Response } from 'express';
+
 import { WorkflowService } from '../services/WorkflowService';
-import { WorkflowStatus } from '../factories/WorkflowFactory';
+import { WorkflowFactory, WorkflowStatus } from '../factories/WorkflowFactory';
 
 export class WorkflowController {
-    constructor(private workflowService: WorkflowService) { }
+    constructor(
+        private workflowService: WorkflowService,
+        private workflowFactory?: WorkflowFactory
+    ) { }
 
     async getWorkflowStatus(req: Request, res: Response): Promise<void> {
         try {
@@ -69,6 +74,54 @@ export class WorkflowController {
                 finalResult: workflow.finalResult
             });
         } catch (error: any) {
+            res.status(500).json({
+                error: `Internal server error: ${error.message}`
+            });
+        }
+    }
+    async createAnalysisWorkflow(req: Request, res: Response): Promise<void> {
+        try {
+            if (!process.env.WORKFLOW_DIR) {
+                res.status(500).json({
+                    error: 'WORKFLOW_DIR environment variable is not set.'
+                });
+                return;
+            }
+
+            const { clientId, geoJson } = req.body;
+
+            if (!clientId) {
+                res.status(400).json({
+                    error: 'Missing required field: clientId'
+                });
+                return;
+            }
+
+            if (!geoJson) {
+                res.status(400).json({
+                    error: 'Missing required field: geoJson'
+                });
+                return;
+            }
+
+            const workflowFile = path.join(process.env.WORKFLOW_DIR, 'analysis.yml');
+
+            if (!this.workflowFactory) {
+                throw new Error('WorkflowFactory not initialized');
+            }
+
+            const workflow = await this.workflowFactory.createWorkflowFromYAML(
+                workflowFile,
+                clientId,
+                JSON.stringify(geoJson)
+            );
+
+            res.status(202).json({
+                workflowId: workflow.workflowId,
+                message: 'Workflow created and tasks queued from YAML definition.'
+            });
+        } catch (error: any) {
+            console.error('Error creating analysis workflow:', error);
             res.status(500).json({
                 error: `Internal server error: ${error.message}`
             });

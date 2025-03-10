@@ -1,5 +1,5 @@
 import { Task } from '../../../src/models/Task';
-import { TaskStatus } from '../../../src/workers/TaskRunner';
+import { TaskStatus } from '../../../src/services/TaskService';
 import { PolygonAreaJob } from '../../../src/jobs/PolygonAreaJob';
 import { WorkflowStatus } from '../../../src/factories/WorkflowFactory';
 

@@ -3,7 +3,7 @@ import { Repository } from 'typeorm';
 import { Job } from './Job';
 import { Task } from '../models/Task';
 import { Result } from '../models/Result';
-import { TaskStatus } from '../workers/TaskRunner';
+import { TaskStatus } from '../services/TaskService';
 
 export class ReportGenerationJob implements Job {
 
