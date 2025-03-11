@@ -6,8 +6,55 @@ import { marked } from 'marked';
 export const createRootRouter = () => {
     const router = express.Router();
     const staticPath = path.join(__dirname, '../../public');
+    
+    /**
+     * Serves static files from the public directory
+     * 
+     * @route USE /public
+     * 
+     * @swagger
+     * /public/{filepath}:
+     *   get:
+     *     summary: Serve static files
+     *     description: Serves static files from the public directory
+     *     tags: [Static Content]
+     *     parameters:
+     *       - in: path
+     *         name: filepath
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: Path to the static file
+     *     responses:
+     *       200:
+     *         description: Static file served successfully
+     *       404:
+     *         description: File not found
+     */
     router.use('/public', express.static(staticPath));
 
+    /**
+     * Renders the README.md file as styled HTML
+     * 
+     * @route GET /
+     * 
+     * @swagger
+     * /:
+     *   get:
+     *     summary: Render README
+     *     description: Renders the project's README.md file as styled HTML with dark mode
+     *     tags: [Documentation]
+     *     responses:
+     *       200:
+     *         description: README successfully rendered as HTML
+     *         content:
+     *           text/html:
+     *             schema:
+     *               type: string
+     *               description: HTML content of the styled README
+     *       500:
+     *         description: Error loading README.md file
+     */
     router.get('/', (req, res) => {
         const readmePath = path.join(__dirname, '../..', 'README.md');
         fs.readFile(readmePath, 'utf8', (err, data) => {

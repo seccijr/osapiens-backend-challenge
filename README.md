@@ -1,15 +1,37 @@
 # OSApiens Backend Challenge
 
-A robust backend system for handling asynchronous workflows and tasks with support for interdependent task execution, task status management, and result aggregation.
+A robust backend system implementing an asynchronous task processing framework with support for complex workflows, dependency management, state transitions, and result aggregation—demonstrating clean architecture principles and design patterns.
 
 ## Table of Contents
 
+- [Introduction](#introduction)
+- [Technology Stack](#technology-stack)
 - [Installation](#installation)
 - [Running the Application](#running-the-application)
-- [Features](#features)
+- [Architecture & Design Patterns](#architecture--design-patterns)
+- [Task State Machine](#task-state-machine)
 - [API Documentation](#api-documentation)
 - [Testing](#testing)
 - [Project Structure](#project-structure)
+
+## Introduction
+
+This project tackles the challenge of building a robust system to handle asynchronous workflows with interdependent tasks. It leverages TypeScript, Express, TypeORM, and follows clean architecture principles to deliver:
+
+- Task scheduling and dependency management
+- State machine for reliable task progression
+- Asynchronous processing with background workers
+- Result aggregation and reporting
+- RESTful API for workflow management
+
+## Technology Stack
+
+- **TypeScript** - Strongly typed language
+- **Express** - Web framework
+- **TypeORM** - ORM for database operations
+- **SQLite** - Database (configurable)
+- **Jest** - Testing framework
+- **YAML** - Workflow definitions
 
 ## Installation
 
@@ -27,41 +49,94 @@ A robust backend system for handling asynchronous workflows and tasks with suppo
    ```
 
 3. **Configure TypeORM:**
+   - The system uses SQLite by default for simplicity
    - Edit `data-source.ts` if you need to change database settings
+   - Database migrations will run automatically on startup
 
 ## Running the Application
 
-   ```bash
-   yarn start
-   ```
+Start the application with:
 
-   This will start the Express server and background worker after database initialization.
+```bash
+yarn start
+```
 
-## Features
+This will:
+1. Initialize the database
+2. Run any pending migrations
+3. Start the Express server
+4. Launch the background worker for asynchronous task processing
 
-### Key Components
+## Architecture & Design Patterns
 
-- **Task & Workflow Entities**: Managed with TypeORM
-- **WorkflowFactory**: Creates workflows from YAML configurations
-- **TaskRunner**: Executes jobs and manages task/workflow states
-- **Background Worker**: Processes queued tasks asynchronously
-- **Dependency Support**: Tasks can depend on outputs from earlier tasks
-- **Final Result Aggregation**: Collects and saves final workflow results
+This project implements several design patterns to achieve clean architecture:
 
-### Supported Jobs
+1. **Factory Pattern**:
+   - `WorkflowFactory`: Creates workflow instances from configuration
+   - `JobFactory`: Instantiates appropriate job implementations
+   - `ResultFactory`: Creates standardized result objects
 
-1. **Data Analysis**: Analyzes provided geographical data
-2. **Email Notification**: Sends notifications about workflow progress
-3. **Polygon Area Calculation**: Calculates the area of a provided polygon
-4. **Report Generation**: Aggregates outputs from multiple tasks
+2. **Strategy Pattern**:
+   - Jobs implement a common interface but provide different execution strategies
+   - Different task types are handled by specialized job implementations
+
+3. **Observer Pattern**:
+   - Tasks notify dependents when they complete
+   - Event-based workflow progression
+
+4. **State Pattern**:
+   - Tasks follow a well-defined state machine (see diagram below)
+   - State transitions are strictly controlled and validated
+
+5. **Repository Pattern**:
+   - Clean separation between database operations and business logic
+   - TypeORM entities provide persistent storage
+
+6. **Service Layer**:
+   - `TaskService`: Manages task execution and state transitions
+   - `WorkflowService`: Orchestrates workflow creation and monitoring
+
+## Task State Machine
+
+Tasks follow a strict state machine to ensure reliable processing:
+
+```
+                                                       ┌─────────────┐ 
+                                                       │             │ 
+                                       ┌─────────────▶│  COMPLETED  │ 
+                                       │               │             │ 
+                                       │               └─────────────┘ 
+                                       │                               
+ ┌──────────┐   ┌──────────┐    ┌──────┴──────┐        ┌─────────────┐ 
+ │          │   │          │    │             │        │             │ 
+ │  QUEUED  ├─▶│   READY   ├──▶│ IN PROGRESS ├──────▶│   FAILED    │ 
+ │          │   │          │    │             │        │             │ 
+ └────┬─────┘   └──────────┘    └─────────────┘        └─────────────┘ 
+      │                                                                
+      │                                                ┌─────────────┐ 
+      │                                                │             │ 
+      └──────────────────────────────────────────────▶│   SKIPPED   │ 
+                                                       │             │ 
+                                                       └─────────────┘ 
+```
+
+State transitions:
+- `QUEUED` - Initial task state upon creation
+- `READY` - Task is ready for processing (all dependencies resolved)
+- `IN PROGRESS` - Task is actively being processed
+- `COMPLETED` - Task has finished successfully
+- `FAILED` - Task has encountered an error
+- `SKIPPED` - Task could no be executed due to missing dependencies fulfillment
+
+The `TaskService` enforces these transitions.
 
 ## API Documentation
 
-### Create a Workflow
+### Create an Analysis Workflow
 
 **Endpoint:** POST `/analysis`
 
-**Description:** Creates a new workflow with tasks for analyzing geographical data.
+**Description:** Creates a new workflow for analyzing geographical data.
 
 **Request:**
 
@@ -85,9 +160,122 @@ A robust backend system for handling asynchronous workflows and tasks with suppo
 }
 ```
 
-**Example:**
+**Response:**
+```json
+{
+    "workflowId": "3433c76d-f226-4c91-afb5-7dfc7accab24",
+    "status": "created",
+    "message": "Workflow created successfully"
+}
+```
+
+### Get Workflow Status
+
+**Endpoint:** GET `/workflow/:id/status`
+
+**Description:** Retrieves the current status of a workflow.
+
+**Response:**
+
+```json
+{
+    "workflowId": "3433c76d-f226-4c91-afb5-7dfc7accab24",
+    "status": "in_progress",
+    "completedTasks": 3,
+    "totalTasks": 5,
+    "tasks": [
+        {
+            "id": "task-1",
+            "type": "polygonArea",
+            "status": "completed"
+        },
+        {
+            "id": "task-2",
+            "type": "dataAnalysis",
+            "status": "processing"
+        }
+    ]
+}
+```
+
+### Get Workflow Results
+
+**Endpoint:** GET `/workflow/:id/results`
+
+**Description:** Retrieves the final results of a completed workflow.
+
+**Response:**
+
+```json
+{
+    "workflowId": "3433c76d-f226-4c91-afb5-7dfc7accab24",
+    "status": "completed",
+    "finalResult": {
+        "workflowId": "3433c76d-f226-4c91-afb5-7dfc7accab24",
+        "tasks": [
+            {
+                "taskId": "task-1",
+                "type": "polygonArea",
+                "output": { "area": 42.5, "unit": "sq km" }
+            },
+            {
+                "taskId": "task-2",
+                "type": "dataAnalysis",
+                "output": { "forestCoverage": 85, "waterBodies": 2 }
+            }
+        ],
+        "finalReport": "Total area analyzed: 42.5 sq km with 85% forest coverage and 2 water bodies"
+    }
+}
+```
+
+### Response Codes
+
+- **200 OK**: Request successful
+- **201 Created**: Resource successfully created
+- **400 Bad Request**: Invalid request parameters
+- **404 Not Found**: Resource not found
+- **409 Conflict**: Resource state conflict (e.g., workflow already completed)
+- **500 Internal Server Error**: Server-side error
+
+## Testing
+
+This project was developed using Test-Driven Development (TDD), with tests written before implementation. The test suite covers unit, integration, and end-to-end tests.
+
+### Running Unit Tests
 
 ```bash
+yarn test tests/unit
+```
+
+This runs all unit tests using Jest, covering:
+- Service classes (TaskService, WorkflowService)
+- Factories (WorkflowFactory, JobFactory, ResultFactory)
+- Job implementations
+- State machine transitions
+- Error handling
+
+### Running End-to-End Tests
+
+```bash
+yarn test tests/e2e
+```
+
+E2E tests cover the complete flow:
+1. API request handling
+2. Workflow creation
+3. Task queueing and execution
+4. Background worker processing
+5. State transitions
+6. Result aggregation
+7. Final response generation
+
+### Manual Testing
+
+For manual testing, use the following curl commands:
+
+```bash
+# Create a workflow
 curl -X POST http://localhost:3000/analysis \
   -H "Content-Type: application/json" \
   -d '{
@@ -107,199 +295,59 @@ curl -X POST http://localhost:3000/analysis \
         }
     }
 }'
-```
 
-### Get Workflow Status
-
-**Endpoint:** GET `/workflow/:id/status`
-
-**Description:** Retrieves the current status of a workflow.
-
-**Response:**
-
-```json
-{
-  "workflowId": "3433c76d-f226-4c91-afb5-7dfc7accab24",
-  "status": "in_progress",
-  "completedTasks": 3,
-  "totalTasks": 5
-}
-```
-
-**Example:**
-
-```bash
+# Check workflow status (replace with actual workflowId)
 curl -X GET http://localhost:3000/workflow/3433c76d-f226-4c91-afb5-7dfc7accab24/status
-```
 
-### Get Workflow Results
-
-**Endpoint:** GET `/workflow/:id/results`
-
-**Description:** Retrieves the final results of a completed workflow.
-
-**Response:**
-
-```json
-{
-  "workflowId": "3433c76d-f226-4c91-afb5-7dfc7accab24",
-  "status": "completed",
-  "finalResult": {
-    "workflowId": "3433c76d-f226-4c91-afb5-7dfc7accab24",
-    "tasks": [
-      { "taskId": "task-1-id", "type": "polygonArea", "output": "42.5 sq km" },
-      { "taskId": "task-2-id", "type": "dataAnalysis", "output": "Forest coverage: 85%" }
-    ],
-    "finalReport": "Total area analyzed: 42.5 sq km with 85% forest coverage"
-  }
-}
-```
-
-**Example:**
-
-```bash
+# Get workflow results when completed
 curl -X GET http://localhost:3000/workflow/3433c76d-f226-4c91-afb5-7dfc7accab24/results
 ```
-
-### Response Codes
-
-- **200 OK**: Request successful
-- **201 Created**: Resource successfully created
-- **400 Bad Request**: Invalid request or workflow not yet completed
-- **404 Not Found**: Resource not found
-- **500 Internal Server Error**: Server-side error
-
-## Testing
-
-### Running Unit Tests
-
-```bash
-yarn test
-```
-
-This command runs all unit tests using Jest, covering individual components like TaskRunner, WorkflowFactory, and job implementations.
-
-### Running E2E Tests
-
-```bash
-yarn run test:e2e
-```
-
-This runs end-to-end tests that validate the complete workflow from API request to task execution and result aggregation.
-
-### Manual Testing with Examples
-
-1. **Create a workflow and check logs:**
-
-   ```bash
-   # Create a workflow
-   curl -X POST http://localhost:3000/analysis \
-     -H "Content-Type: application/json" \
-     -d '{
-        "clientId": "client123",
-        "geoJson": {
-            "type": "Feature",
-            "properties": {},
-            "geometry": {
-                "type": "Polygon",
-                "coordinates": [[
-                    [0, 0],
-                    [1, 0],
-                    [1, 1],
-                    [0, 1],
-                    [0, 0]
-                ]]
-            }
-        }
-   }'
-   
-   # Note the returned workflowId, then check its status
-   curl -X GET http://localhost:3000/workflow/{workflowId}/status
-   
-   # Once completed, check the results
-   curl -X GET http://localhost:3000/workflow/{workflowId}/results
-   ```
-
-2. **Testing workflow with interdependent tasks:**
-
-   Create a workflow that contains tasks with dependencies:
-
-   ```bash
-   curl -X POST http://localhost:3000/custom-workflow \
-     -H "Content-Type: application/json" \
-     -d '{
-     "clientId": "client123",
-     "workflowDefinition": {
-       "name": "dependent_tasks_workflow",
-       "steps": [
-         {
-           "taskType": "polygonArea",
-           "stepNumber": 1
-         },
-         {
-           "taskType": "dataAnalysis",
-           "stepNumber": 2,
-           "dependency": 1
-         },
-         {
-           "taskType": "reportGeneration",
-           "stepNumber": 3,
-           "dependency": 2
-         }
-       ]
-     },
-     "geoJson": {
-       "type": "Polygon",
-       "coordinates": [[...]]
-     }
-   }'
-   ```
 
 ## Project Structure
 
 ```
 src/
 ├─ models/
-│   ├─ Task.ts           # Task entity definition
-│   ├─ Result.ts         # Result entity definition
-│   ├─ Workflow.ts       # Workflow entity definition
+│   ├─ Task.ts                  # Task entity with state management
+│   ├─ Result.ts                # Result entity for storing outputs
+│   ├─ Workflow.ts              # Workflow entity representing a job sequence
 │
 ├─ jobs/
-│   ├─ Job.ts            # Job interface
-│   ├─ DataAnalysisJob.ts      # Analyzes geographical data
+│   ├─ Job.ts                   # Job interface defining execution contract
+│   ├─ DataAnalysisJob.ts       # Analyzes geographical data
 │   ├─ EmailNotificationJob.ts  # Sends notifications
 │   ├─ PolygonAreaJob.ts        # Calculates polygon area
 │   ├─ ReportGenerationJob.ts   # Generates final reports
 │
 ├─ workers/
-│   ├─ TaskWorker.ts     # Background worker that polls for queued tasks
-│   ├─ TaskRunner.ts     # Executes jobs and manages task states
+│   ├─ TaskWorker.ts            # Background worker that processes queued tasks
 │
 ├─ factories/
-│   ├─ JobFactory.ts     # Creates appropriate job instances
-│   ├─ ResultFactory.ts  # Creates result objects
-│   ├─ WorkflowFactory.ts # Creates workflows from definitions
+│   ├─ JobFactory.ts            # Creates appropriate job instances
+│   ├─ ResultFactory.ts         # Creates standardized result objects
+│   ├─ WorkflowFactory.ts       # Creates workflows from definitions
 │
 ├─ routes/
-│   ├─ RootRoute.ts      # Main application routes
-│   ├─ AnalysisRoutes.ts # Routes for analysis tasks
-│   ├─ WorkflowRoutes.ts # Routes for workflow management
+│   ├─ RootRoute.ts             # Main application routes
+│   ├─ AnalysisRoutes.ts        # Routes for analysis workflows
+│   ├─ WorkflowRoutes.ts        # Routes for workflow management
 │
 ├─ controllers/
-│   ├─ WorkflowController.ts # Handles workflow-related requests
+│   ├─ WorkflowController.ts    # Handles workflow-related requests
 │
 ├─ services/
-│   ├─ WorkflowService.ts   # Business logic for workflows
+│   ├─ WorkflowService.ts       # Business logic for workflows
+│   ├─ TaskService.ts           # Manages task state transitions
 │
-├─ data-source.ts        # TypeORM database configuration
-├─ index.ts              # Application entry point
+├─ data-source.ts               # TypeORM database configuration
+├─ index.ts                     # Application entry point
 │
-workflows/               # YAML workflow definitions
+workflows/                      # YAML workflow definitions
 │
 tests/
-├─ unit/                 # Unit tests
-├─ e2e/                  # End-to-end tests
+├─ unit/                        # Unit tests for individual components
+├─ e2e/                         # End-to-end API tests
 │
-public/                  # Static files
+public/                         # Static files
 ```
 

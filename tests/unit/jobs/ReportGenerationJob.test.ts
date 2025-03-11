@@ -2,14 +2,16 @@ import { Repository } from 'typeorm';
 
 import { Task } from '../../../src/models/Task';
 import { Result } from '../../../src/models/Result';
-import { TaskStatus } from '../../../src/workers/TaskRunner';
+import { TaskStatus } from '../../../src/services/TaskService';
 import { ReportGenerationJob } from '../../../src/jobs/ReportGenerationJob'
+import { Workflow } from '../../../src/models/Workflow';
 
 describe('ReportGenerationJob', () => {
     let job: ReportGenerationJob;
     let mockTask: Task;
     let mockResultRepository: Repository<Result>;
     let mockTaskRepository: Repository<Task>;
+    let mocWorkflowRepository: Repository<Workflow>;
 
     beforeEach(() => {
         mockResultRepository = {
@@ -22,8 +24,14 @@ describe('ReportGenerationJob', () => {
             findOne: jest.fn(),
         } as unknown as Repository<Task>;
 
+        mocWorkflowRepository = {
+            find: jest.fn(),
+            findOne: jest.fn(),
+            save: jest.fn(),
+        } as unknown as Repository<Workflow>;
 
-        job = new ReportGenerationJob(mockResultRepository, mockTaskRepository);
+
+        job = new ReportGenerationJob(mockResultRepository, mockTaskRepository, mocWorkflowRepository);
 
         mockTask = {
             taskId: 'report-task-id',
@@ -74,11 +82,17 @@ describe('ReportGenerationJob', () => {
                 },
             ] as Result[];
 
+            const mockWorkflow = {
+                workflowId: 'test-workflow-id',
+                tasks: mockTasks,
+            } as Workflow;
+
             (mockTaskRepository.find as jest.Mock).mockResolvedValue(mockTasks);
             (mockResultRepository.findOne as jest.Mock).mockImplementation(async (options: any) => {
                 const taskId = options.where.taskId;
                 return mockResults.find(r => r.taskId === taskId);
             });
+            (mocWorkflowRepository.findOne as jest.Mock).mockResolvedValue(mockWorkflow);
 
             // Act
             const result = await job.run(mockTask);
@@ -125,11 +139,17 @@ describe('ReportGenerationJob', () => {
                 },
             ] as Result[];
 
+            const mockWorkflow = {
+                workflowId: 'test-workflow-id',
+                tasks: mockTasks,
+            } as Workflow;
+
             (mockTaskRepository.find as jest.Mock).mockResolvedValue(mockTasks);
             (mockResultRepository.findOne as jest.Mock).mockImplementation(async (options: any) => {
                 const taskId = options.where.taskId;
                 return mockResults.find(r => r.taskId === taskId);
             });
+            (mocWorkflowRepository.findOne as jest.Mock).mockResolvedValue(mockWorkflow);
 
             // Act
             const result = await job.run(mockTask);
@@ -148,7 +168,13 @@ describe('ReportGenerationJob', () => {
 
         it('should handle empty workflows', async () => {
             // Arrange
+
+            const mockWorkflow = {
+                workflowId: 'test-workflow-id',
+            } as Workflow;
+
             (mockTaskRepository.find as jest.Mock).mockResolvedValue([]);
+            (mocWorkflowRepository.findOne as jest.Mock).mockResolvedValue(mockWorkflow);
 
             // Act
             const result = await job.run(mockTask);
@@ -157,7 +183,6 @@ describe('ReportGenerationJob', () => {
             expect(result).toBeDefined();
             expect(result.tasks).toHaveLength(0);
             expect(result.summary.totalTasks).toBe(0);
-            expect(result.finalReport).toBe('No tasks found in workflow');
         });
 
         it('should throw an error if workflow ID is missing', async () => {

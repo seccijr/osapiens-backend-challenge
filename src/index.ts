@@ -8,7 +8,7 @@ import { Workflow } from './models/Workflow';
 import { AppDataSource } from './data-source';
 
 import { TaskWorker } from './workers/TaskWorker';
-import { TaskRunner } from './workers/TaskRunner';
+import { TaskService } from './services/TaskService';
 
 import { JobFactory } from './factories/JobFactory';
 import { WorkflowFactory } from './factories/WorkflowFactory';
@@ -27,31 +27,30 @@ const tasksRepository = AppDataSource.getRepository(Task);
 const workflowsRepository = AppDataSource.getRepository(Workflow);
 const workflowFactory = new WorkflowFactory(workflowsRepository, tasksRepository);
 
-const jobFactory = new JobFactory(resultsRepository, tasksRepository);
+const jobFactory = new JobFactory(resultsRepository, tasksRepository, workflowsRepository);
 const resulFactory = new ResultFactory();
 
-const taskRunner = new TaskRunner(
+const taskService = new TaskService(
     workflowsRepository,
     resultsRepository,
     tasksRepository,
     resulFactory,
     jobFactory
 );
-const taskWorker = new TaskWorker(taskRunner, tasksRepository);
+const taskWorker = new TaskWorker(taskService);
 
 const workflowService = new WorkflowService(
     workflowsRepository,
-    tasksRepository,
-    resultsRepository
+    tasksRepository
 );
-const workflowController = new WorkflowController(workflowService);
+const workflowController = new WorkflowController(workflowService, workflowFactory);
 
 
 // Dependency injection
 const app = express();
 app.use(express.json());
 app.use('/', createRootRouter());
-app.use('/analysis', createAnalysisRouter(workflowFactory));
+app.use('/analysis', createAnalysisRouter(workflowController));
 app.use('/workflow', createWorkflowRouter(workflowController));
 
 AppDataSource.initialize()
