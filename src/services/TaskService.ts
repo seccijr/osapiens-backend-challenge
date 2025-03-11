@@ -1,4 +1,4 @@
-import { DataSource, Repository, In } from 'typeorm';
+import { Repository, In } from 'typeorm';
 
 import { Task } from '../models/Task';
 import { Result } from '../models/Result';
@@ -160,16 +160,8 @@ export class TaskService {
      * @throws If the job fails, it rethrows the error.
      */
     async run(task: Task): Promise<void> {
-        const dependenciesStatus = await this.checkTaskDependenciesStatus(task);
-        if (dependenciesStatus === TaskStatus.Queued) {
-            task.status = TaskStatus.Queued;
-            await this.taskRepository.save(task);
-            return;
-        }
-        if (dependenciesStatus === TaskStatus.Failed) {
-            task.status = TaskStatus.Failed;
-            await this.taskRepository.save(task);
-            return;
+        if (task.status !== TaskStatus.Ready) {
+            throw new Error(`Task ${task.taskId} is not ready to run`);
         }
 
         task.status = TaskStatus.InProgress;
