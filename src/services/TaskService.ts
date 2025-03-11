@@ -10,9 +10,11 @@ import { ResultFactory } from '../factories/ResultFactory';
 
 export const enum TaskStatus {
     Queued = 'queued',
+    Ready = 'ready',
     InProgress = 'in_progress',
     Completed = 'completed',
-    Failed = 'failed'
+    Failed = 'failed',
+    Skipped = 'skipped'
 }
 
 export class TaskService {
@@ -25,36 +27,89 @@ export class TaskService {
     ) { }
 
     /**
-     * Fetches all tasks that are ready to be executed (all dependencies resolved)
-     * @param workflowId - The ID of the workflow
-     * @returns Array of tasks that are ready to be executed
-     */
-    async getReadyTasks(workflowId: string): Promise<Task[]> {
+    * Prepares a task by checking workflow step order and dependencies status.
+    * Task can only proceed if all previous steps are completed/failed.
+    * Task status will be set based on dependencies:
+    * - Skipped: if any dependency failed
+    * - Ready: if all dependencies completed
+    * - Queued: if any previous step or dependency is still in progress
+    * 
+    * @param task - The task to prepare
+    */
+    async prepare(task: Task): Promise<void> {
+        // Load the full workflow with tasks
         const workflow = await this.workflowRepository.findOne({
-            where: { workflowId },
-            relations: ['tasks', 'tasks.dependencies']
+            where: { workflowId: task.workflow.workflowId },
+            relations: ['tasks']
         });
 
         if (!workflow) {
-            throw new Error(`Workflow ${workflowId} not found`);
+            throw new Error(`Workflow ${task.workflow.workflowId} not found`);
         }
 
-        // Filter tasks that are queued and have all dependencies completed
-        return workflow.tasks.filter(task => {
-            // Task must be in queued state
-            if (task.status !== TaskStatus.Queued) {
-                return false;
-            }
+        // Check if all previous tasks (by step number) are completed or failed
+        const previousTasksIncomplete = workflow.tasks.some(t =>
+            t.stepNumber < task.stepNumber &&
+            t.status !== TaskStatus.Completed &&
+            t.status !== TaskStatus.Failed
+        );
 
-            // If no dependencies, task is ready
-            if (!task.dependencies || task.dependencies.length === 0) {
-                return true;
-            }
+        if (previousTasksIncomplete) {
+            task.status = TaskStatus.Queued;
+            await this.taskRepository.save(task);
+            return;
+        }
 
-            // Check if all dependencies are completed
-            return task.dependencies.every(dependency =>
-                dependency.status === TaskStatus.Completed || dependency.status === TaskStatus.Failed
-            );
+        // All previous tasks are done, now check dependencies
+        if (!task.dependencies || task.dependencies.length === 0) {
+            // No dependencies, task is ready
+            task.status = TaskStatus.Ready;
+            await this.taskRepository.save(task);
+            return;
+        }
+
+        // Check status of all dependencies
+        const anyFailed = task.dependencies.some(dep => dep.status === TaskStatus.Failed);
+        if (anyFailed) {
+            task.status = TaskStatus.Skipped;
+            await this.taskRepository.save(task);
+            return;
+        }
+
+        const allCompleted = task.dependencies.every(dep => dep.status === TaskStatus.Completed);
+        if (allCompleted) {
+            task.status = TaskStatus.Ready;
+        } else {
+            // Some dependency is still in progress, ready, or queued
+            task.status = TaskStatus.Queued;
+        }
+
+        await this.taskRepository.save(task);
+    }
+
+    /**
+     * Fetches all tasks that are ready to be executed (all dependencies resolved)
+     * @returns Array of tasks that are ready to be executed
+     */
+    async getReadyTasks(): Promise<Task[]> {
+        return await this.taskRepository.find({
+            where: {
+                status: TaskStatus.Ready
+            },
+            relations: ['dependencies']
+        });
+    }
+
+    /**
+     * Fetches all tasks that are queued
+     * @returns Array of tasks that are ready to be executed
+     */
+    async getQueuedTasks(): Promise<Task[]> {
+        return await this.taskRepository.find({
+            where: {
+                status: TaskStatus.Queued
+            },
+            relations: ['dependencies']
         });
     }
 

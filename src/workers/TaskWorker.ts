@@ -1,15 +1,11 @@
-import { Repository } from 'typeorm';
-
-import { Task } from '../models/Task';
-import { TaskService, TaskStatus } from '../services/TaskService';
-
+import { TaskService } from '../services/TaskService';
 
 export class TaskWorker {
     private stopFlag = false;
+    private readonly batchSize = 10;
 
     constructor(
-        private taskService: TaskService,
-        private taskRepository: Repository<Task>
+        private taskService: TaskService
     ) { }
 
     public stop = () => {
@@ -19,27 +15,38 @@ export class TaskWorker {
     pool = async () => {
         this.stopFlag = false;
         while (!this.stopFlag) {
-            const tasks = await this.taskRepository.find({
-                where: { status: TaskStatus.Queued },
-                relations: ['workflow'] // Ensure workflow is loaded
-            });
+            try {
+                // 1. Get all queued tasks using TaskService
+                const queuedTasks = await this.taskService.getQueuedTasks();
 
-            // Chunk tasks in batches of 10 task to avoid running all tasks at once
-            for (let i = 0; i < tasks.length; i += 10) {
-                const chunk = tasks.slice(i, i + 10);
-                await Promise.all(chunk.map(async (task) => {
-                    if (task) {
+                // 2. Prepare all queued tasks (updating their status)
+                for (const task of queuedTasks) {
+                    try {
+                        await this.taskService.prepare(task);
+                    } catch (error) {
+                        console.error(`Error preparing task ${task.taskId}:`, error);
+                    }
+                }
+
+                // 3. Get tasks that are now ready to run
+                const readyTasks = await this.taskService.getReadyTasks();
+
+                // 4. Run ready tasks in batches
+                for (let i = 0; i < readyTasks.length; i += this.batchSize) {
+                    const batch = readyTasks.slice(i, i + this.batchSize);
+                    await Promise.all(batch.map(async (task) => {
                         try {
                             await this.taskService.run(task);
                         } catch (error) {
-                            console.error('Task execution failed. Task status has already been updated by TaskService.');
-                            console.error(error);
+                            console.error(`Error running task ${task.taskId}:`, error);
                         }
-                    }
-                }));
+                    }));
+                }
+            } catch (error) {
+                console.error('Error during task pool cycle:', error);
             }
 
-            // Wait before checking for the next task again
+            // Wait before next polling cycle
             await new Promise(resolve => setTimeout(resolve, 100));
         }
     }

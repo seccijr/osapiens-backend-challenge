@@ -678,11 +678,427 @@ describe('TaskService with dependencies', () => {
             (mockTaskRepository.find as jest.Mock) = jest.fn().mockResolvedValue([taskA, taskB, readyTask, notReadyTask]);
 
             // Act
-            const readyTasks = await taskRunner.getReadyTasks(workflow.workflowId);
+            const readyTasks = await taskRunner.getReadyTasks();
 
             // Assert
             expect(readyTasks).toHaveLength(1);
             expect(readyTasks[0].taskId).toBe('ready-task');
+        });
+    });
+
+    describe('prepare', () => {
+        it('should set task to Ready when all previous steps and dependencies are completed', async () => {
+            // Arrange
+            const workflow = {
+                workflowId: 'workflow-1',
+                clientId,
+                status: WorkflowStatus.InProgress,
+                tasks: []
+            } as Workflow;
+
+            const task1 = {
+                taskId: 'task-1',
+                stepNumber: 1,
+                status: TaskStatus.Completed,
+                geoJson: JSON.stringify({}),
+                taskType: 'independentTaskType',
+                workflow,
+                clientId,
+            } as Task;
+
+            const task2 = {
+                taskId: 'task-2',
+                stepNumber: 2,
+                status: TaskStatus.Completed,
+                geoJson: JSON.stringify({}),
+                taskType: 'independentTaskType',
+                workflow,
+                clientId,
+            } as Task;
+
+            const currentTask = {
+                taskId: 'task-3',
+                stepNumber: 3,
+                status: TaskStatus.Queued,
+                geoJson: JSON.stringify({}),
+                taskType: 'dependentTaskType',
+                workflow,
+                clientId,
+                dependencies: [task1, task2]
+            } as Task;
+
+            workflow.tasks = [task1, task2, currentTask];
+
+            (mockWorkflowRepository.findOne as jest.Mock).mockResolvedValue(workflow);
+
+            // Act
+            await taskRunner.prepare(currentTask);
+
+            // Assert
+            expect(mockTaskRepository.save).toHaveBeenCalledWith(expect.objectContaining({
+                taskId: 'task-3',
+                status: TaskStatus.Ready
+            }));
+        });
+
+        it('should set task to Queued when previous steps are not all completed', async () => {
+            // Arrange
+            const workflow = {
+                workflowId: 'workflow-1',
+                clientId,
+                status: WorkflowStatus.InProgress,
+                tasks: []
+            } as Workflow;
+
+            const task1 = {
+                taskId: 'task-1',
+                stepNumber: 1,
+                status: TaskStatus.Completed,
+                geoJson: JSON.stringify({}),
+                taskType: 'independentTaskType',
+                workflow,
+                clientId,
+            } as Task;
+
+            const task2 = {
+                taskId: 'task-2',
+                stepNumber: 2,
+                status: TaskStatus.InProgress, // Not completed yet
+                geoJson: JSON.stringify({}),
+                taskType: 'independentTaskType',
+                workflow,
+                clientId,
+            } as Task;
+
+            const currentTask = {
+                taskId: 'task-3',
+                stepNumber: 3,
+                status: TaskStatus.Queued,
+                geoJson: JSON.stringify({}),
+                taskType: 'dependentTaskType',
+                workflow,
+                clientId,
+                dependencies: [task1]
+            } as Task;
+
+            workflow.tasks = [task1, task2, currentTask];
+
+            (mockWorkflowRepository.findOne as jest.Mock).mockResolvedValue(workflow);
+
+            // Act
+            await taskRunner.prepare(currentTask);
+
+            // Assert
+            expect(mockTaskRepository.save).toHaveBeenCalledWith(expect.objectContaining({
+                taskId: 'task-3',
+                status: TaskStatus.Queued
+            }));
+        });
+
+        it('should set task to Skipped when any dependency has failed', async () => {
+            // Arrange
+            const workflow = {
+                workflowId: 'workflow-1',
+                clientId,
+                status: WorkflowStatus.InProgress,
+                tasks: []
+            } as Workflow;
+
+            const task1 = {
+                taskId: 'task-1',
+                stepNumber: 1,
+                status: TaskStatus.Completed,
+                geoJson: JSON.stringify({}),
+                taskType: 'independentTaskType',
+                workflow,
+                clientId,
+            } as Task;
+
+            const task2 = {
+                taskId: 'task-2',
+                stepNumber: 2,
+                status: TaskStatus.Failed, // Failed dependency
+                geoJson: JSON.stringify({}),
+                taskType: 'independentTaskType',
+                workflow,
+                clientId,
+            } as Task;
+
+            const currentTask = {
+                taskId: 'task-3',
+                stepNumber: 3,
+                status: TaskStatus.Queued,
+                geoJson: JSON.stringify({}),
+                taskType: 'dependentTaskType',
+                workflow,
+                clientId,
+                dependencies: [task1, task2]
+            } as Task;
+
+            workflow.tasks = [task1, task2, currentTask];
+
+            (mockWorkflowRepository.findOne as jest.Mock).mockResolvedValue(workflow);
+
+            // Act
+            await taskRunner.prepare(currentTask);
+
+            // Assert
+            expect(mockTaskRepository.save).toHaveBeenCalledWith(expect.objectContaining({
+                taskId: 'task-3',
+                status: TaskStatus.Skipped
+            }));
+        });
+
+        it('should set task to Queued when any dependency is in progress', async () => {
+            // Arrange
+            const workflow = {
+                workflowId: 'workflow-1',
+                clientId,
+                status: WorkflowStatus.InProgress,
+                tasks: []
+            } as Workflow;
+
+            const task1 = {
+                taskId: 'task-1',
+                stepNumber: 1,
+                status: TaskStatus.Completed,
+                geoJson: JSON.stringify({}),
+                taskType: 'independentTaskType',
+                workflow,
+                clientId,
+            } as Task;
+
+            const task2 = {
+                taskId: 'task-2',
+                stepNumber: 2,
+                status: TaskStatus.InProgress, // In-progress dependency
+                geoJson: JSON.stringify({}),
+                taskType: 'independentTaskType',
+                workflow,
+                clientId,
+            } as Task;
+
+            const currentTask = {
+                taskId: 'task-3',
+                stepNumber: 3,
+                status: TaskStatus.Queued,
+                geoJson: JSON.stringify({}),
+                taskType: 'dependentTaskType',
+                workflow,
+                clientId,
+                dependencies: [task1, task2]
+            } as Task;
+
+            workflow.tasks = [task1, task2, currentTask];
+
+            (mockWorkflowRepository.findOne as jest.Mock).mockResolvedValue(workflow);
+
+            // Act
+            await taskRunner.prepare(currentTask);
+
+            // Assert
+            expect(mockTaskRepository.save).toHaveBeenCalledWith(expect.objectContaining({
+                taskId: 'task-3',
+                status: TaskStatus.Queued
+            }));
+        });
+
+        it('should set task to Queued when a dependency is Ready', async () => {
+            // Arrange
+            const workflow = {
+                workflowId: 'workflow-1',
+                clientId,
+                status: WorkflowStatus.InProgress,
+                tasks: []
+            } as Workflow;
+
+            const task1 = {
+                taskId: 'task-1',
+                stepNumber: 1,
+                status: TaskStatus.Completed,
+                geoJson: JSON.stringify({}),
+                taskType: 'independentTaskType',
+                workflow,
+                clientId,
+            } as Task;
+
+            const task2 = {
+                taskId: 'task-2',
+                stepNumber: 2,
+                status: TaskStatus.Ready, // Ready dependency
+                geoJson: JSON.stringify({}),
+                taskType: 'independentTaskType',
+                workflow,
+                clientId,
+            } as Task;
+
+            const currentTask = {
+                taskId: 'task-3',
+                stepNumber: 3,
+                status: TaskStatus.Queued,
+                geoJson: JSON.stringify({}),
+                taskType: 'dependentTaskType',
+                workflow,
+                clientId,
+                dependencies: [task1, task2]
+            } as Task;
+
+            workflow.tasks = [task1, task2, currentTask];
+
+            (mockWorkflowRepository.findOne as jest.Mock).mockResolvedValue(workflow);
+
+            // Act
+            await taskRunner.prepare(currentTask);
+
+            // Assert
+            expect(mockTaskRepository.save).toHaveBeenCalledWith(expect.objectContaining({
+                taskId: 'task-3',
+                status: TaskStatus.Queued
+            }));
+        });
+
+        it('should handle tasks with no dependencies', async () => {
+            // Arrange
+            const workflow = {
+                workflowId: 'workflow-1',
+                clientId,
+                status: WorkflowStatus.InProgress,
+                tasks: []
+            } as Workflow;
+
+            const task1 = {
+                taskId: 'task-1',
+                stepNumber: 1,
+                status: TaskStatus.Completed,
+                geoJson: JSON.stringify({}),
+                taskType: 'independentTaskType',
+                workflow,
+                clientId,
+            } as Task;
+
+            const currentTask = {
+                taskId: 'task-2',
+                stepNumber: 2,
+                status: TaskStatus.Queued,
+                geoJson: JSON.stringify({}),
+                taskType: 'independentTaskType',
+                workflow,
+                clientId,
+                dependencies: [] // No dependencies
+            } as Task;
+
+            workflow.tasks = [task1, currentTask];
+
+            (mockWorkflowRepository.findOne as jest.Mock).mockResolvedValue(workflow);
+
+            // Act
+            await taskRunner.prepare(currentTask);
+
+            // Assert
+            expect(mockTaskRepository.save).toHaveBeenCalledWith(expect.objectContaining({
+                taskId: 'task-2',
+                status: TaskStatus.Ready
+            }));
+        });
+
+        it('should check all previous tasks in workflow regardless of dependencies', async () => {
+            // Arrange
+            const workflow = {
+                workflowId: 'workflow-1',
+                clientId,
+                status: WorkflowStatus.InProgress,
+                tasks: []
+            } as Workflow;
+
+            const task1 = {
+                taskId: 'task-1',
+                stepNumber: 1,
+                status: TaskStatus.Completed,
+                geoJson: JSON.stringify({}),
+                taskType: 'independentTaskType',
+                workflow,
+                clientId,
+            } as Task;
+
+            const task2 = {
+                taskId: 'task-2',
+                stepNumber: 2,
+                status: TaskStatus.InProgress, // This task is in progress
+                geoJson: JSON.stringify({}),
+                taskType: 'independentTaskType',
+                workflow,
+                clientId,
+            } as Task;
+
+            const currentTask = {
+                taskId: 'task-3',
+                stepNumber: 3,
+                status: TaskStatus.Queued,
+                geoJson: JSON.stringify({}),
+                taskType: 'dependentTaskType',
+                workflow,
+                clientId,
+                dependencies: [task1] // Only depends on task1, but task2 is in the workflow
+            } as Task;
+
+            workflow.tasks = [task1, task2, currentTask];
+
+            (mockWorkflowRepository.findOne as jest.Mock).mockResolvedValue(workflow);
+
+            // Act
+            await taskRunner.prepare(currentTask);
+
+            // Assert
+            expect(mockTaskRepository.save).toHaveBeenCalledWith(expect.objectContaining({
+                taskId: 'task-3',
+                status: TaskStatus.Queued
+            }));
+            // Should be queued because task2 is still in progress, even though it's not a direct dependency
+        });
+
+        it('should allow a task to proceed when previous steps have failed', async () => {
+            // Arrange
+            const workflow = {
+                workflowId: 'workflow-1',
+                clientId,
+                status: WorkflowStatus.InProgress,
+                tasks: []
+            } as Workflow;
+
+            const task1 = {
+                taskId: 'task-1',
+                stepNumber: 1,
+                status: TaskStatus.Failed, // This task failed
+                geoJson: JSON.stringify({}),
+                taskType: 'independentTaskType',
+                workflow,
+                clientId,
+            } as Task;
+
+            const currentTask = {
+                taskId: 'task-2',
+                stepNumber: 2,
+                status: TaskStatus.Queued,
+                geoJson: JSON.stringify({}),
+                taskType: 'independentTaskType',
+                workflow,
+                clientId,
+                dependencies: [] // No dependencies on task1
+            } as Task;
+
+            workflow.tasks = [task1, currentTask];
+
+            (mockWorkflowRepository.findOne as jest.Mock).mockResolvedValue(workflow);
+
+            // Act
+            await taskRunner.prepare(currentTask);
+
+            // Assert
+            expect(mockTaskRepository.save).toHaveBeenCalledWith(expect.objectContaining({
+                taskId: 'task-2',
+                status: TaskStatus.Ready
+            }));
+            // Should be ready because previous tasks are either completed or failed
         });
     });
 });
