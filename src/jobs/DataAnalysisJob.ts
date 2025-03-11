@@ -26,6 +26,16 @@ export class DataAnalysisJob implements Job {
     async run(task: Task): Promise<string> {
         const inputGeometry: Feature<Polygon> = JSON.parse(task.geoJson);
 
+        if (
+            !inputGeometry
+            || !inputGeometry.geometry
+            || inputGeometry.geometry.type !== 'Polygon'
+            || !inputGeometry.geometry.coordinates
+            || inputGeometry.geometry.coordinates.length === 0
+        ) {
+            throw new Error('Invalid input geometry');
+        }
+
         for (const countryFeature of countryMapping.features) {
             if (countryFeature.geometry.type === 'Polygon' || countryFeature.geometry.type === 'MultiPolygon') {
                 const isWithin = booleanWithin(inputGeometry, countryFeature as Feature<Polygon>);

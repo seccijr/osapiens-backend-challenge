@@ -185,8 +185,9 @@ export class TaskService {
             await this.taskRepository.save(task);
 
         } catch (error: any) {
-            console.error(`Error running job ${task.taskType} for task ${task.taskId}:`, error);
-
+            const result = this.resultFactory.createResult(task.taskId!, JSON.stringify(error || {}));
+            await this.resultRepository.save(result);
+            task.resultId = result.resultId!;
             task.status = TaskStatus.Failed;
             task.progress = null;
             await this.taskRepository.save(task);
