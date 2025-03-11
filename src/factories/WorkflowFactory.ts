@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as yaml from 'js-yaml';
-import { DataSource, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 
 import { Task } from '../models/Task';
 import { Workflow } from '../models/Workflow';
@@ -16,7 +16,7 @@ export const enum WorkflowStatus {
 interface WorkflowStep {
     taskType: string;
     stepNumber: number;
-    dependency?: number; // Added to support task dependencies
+    dependencies?: number[]; // Updated to support multiple task dependencies
 }
 
 interface WorkflowDefinition {
@@ -55,15 +55,20 @@ export class WorkflowFactory {
         // Process steps in order to properly handle dependencies
         const sortedSteps = [...workflowDef.steps].sort((a, b) => a.stepNumber - b.stepNumber);
 
+        // Check if all step numbers exist
+        for (const step of sortedSteps) {
+            existentTasks.set(step.stepNumber, true);
+        }
+
         // Check if dependencies are valid
         for (const step of sortedSteps) {
-            if (step.dependency !== undefined) {
-                const independentTask = existentTasks.get(step.dependency);
-                if (!independentTask) {
-                    throw new Error('Invalid dependency reference');
+            if (step.dependencies && step.dependencies.length > 0) {
+                for (const dependency of step.dependencies) {
+                    if (!existentTasks.get(dependency)) {
+                        throw new Error('Invalid dependency reference');
+                    }
                 }
             }
-            existentTasks.set(step.stepNumber, true);
         }
 
         for (const step of sortedSteps) {
@@ -75,13 +80,16 @@ export class WorkflowFactory {
             task.stepNumber = step.stepNumber;
             task.workflow = savedWorkflow;
 
-            // Set dependency if specified
-            if (step.dependency !== undefined) {
-                const independentTask = savedTasks.get(step.dependency);
-                if (!independentTask) {
-                    throw new Error('Invalid dependency reference');
+            // Set dependencies if specified
+            if (step.dependencies && step.dependencies.length > 0) {
+                task.dependencies = [];
+                for (const dependencyNumber of step.dependencies) {
+                    const dependencyTask = savedTasks.get(dependencyNumber);
+                    if (!dependencyTask) {
+                        throw new Error('Invalid dependency reference');
+                    }
+                    task.dependencies.push(dependencyTask);
                 }
-                task.dependency = independentTask;
             }
 
             // Save the task and store it for potential future dependencies

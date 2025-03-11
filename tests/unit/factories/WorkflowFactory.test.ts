@@ -41,10 +41,12 @@ describe('WorkflowFactory with dependencies', () => {
             stepNumber: 1
           - taskType: "polygonArea"
             stepNumber: 2
-            dependency: 1
+            dependencies:
+              - 1
           - taskType: "reportGeneration"
             stepNumber: 3
-            dependency: 2
+            dependencies:
+              - 2
       `;
             const task1Result = { taskId: 'task-1', taskType: 'analysis', stepNumber: 1 };
             const task2Result = { taskId: 'task-2', taskType: 'polygonArea', stepNumber: 2 };
@@ -69,9 +71,9 @@ describe('WorkflowFactory with dependencies', () => {
 
             // Verify the dependencies were set correctly
             const saveArgs = (mockTaskRepository.save as jest.Mock).mock.calls;
-            expect(saveArgs[0][0].dependency).toBeUndefined();
-            expect(saveArgs[1][0].dependency.taskId).toBe('task-1'); // Second task depends on first task
-            expect(saveArgs[2][0].dependency.taskId).toBe('task-2'); // Third task depends on second task
+            expect(saveArgs[0][0].dependencies).toBeUndefined();
+            expect(saveArgs[1][0].dependencies).toEqual([task1Result]); // Second task depends on first task
+            expect(saveArgs[2][0].dependencies).toEqual([task2Result]); // Third task depends on second task
         });
 
         it('should handle missing dependencies gracefully', async () => {
@@ -98,9 +100,9 @@ describe('WorkflowFactory with dependencies', () => {
 
             // Verify no dependencies were set
             const saveArgs = (mockTaskRepository.save as jest.Mock).mock.calls;
-            expect(saveArgs[0][0].dependency).toBeUndefined();
-            expect(saveArgs[1][0].dependency).toBeUndefined();
-            expect(saveArgs[2][0].dependency).toBeUndefined();
+            expect(saveArgs[0][0].dependencies).toBeUndefined();
+            expect(saveArgs[1][0].dependencies).toBeUndefined();
+            expect(saveArgs[2][0].dependencies).toBeUndefined();
         });
 
         it('should throw an error for invalid dependency reference', async () => {
@@ -112,7 +114,8 @@ describe('WorkflowFactory with dependencies', () => {
             stepNumber: 1
           - taskType: "polygonArea"
             stepNumber: 2
-            dependency: 5 # Invalid step number
+            dependencies:
+              - 5 # Invalid step number
       `;
 
             (fs.readFileSync as jest.Mock).mockReturnValue(yamlContent);
@@ -120,6 +123,49 @@ describe('WorkflowFactory with dependencies', () => {
             // Act & Assert
             await expect(workflowFactory.createWorkflowFromYAML('workflow.yml', clientId, geoJson))
                 .rejects.toThrow('Invalid dependency reference');
+        });
+
+        it('should handle multiple dependencies for a task', async () => {
+            // Arrange
+            const yamlContent = `
+        name: "workflow_with_multiple_dependencies"
+        steps:
+          - taskType: "analysis"
+            stepNumber: 1
+          - taskType: "dataPrep"
+            stepNumber: 2
+          - taskType: "reportGeneration"
+            stepNumber: 3
+            dependencies:
+              - 1
+              - 2
+      `;
+            const task1Result = { taskId: 'task-1', taskType: 'analysis', stepNumber: 1 };
+            const task2Result = { taskId: 'task-2', taskType: 'dataPrep', stepNumber: 2 };
+            const task3Result = { taskId: 'task-3', taskType: 'reportGeneration', stepNumber: 3 };
+
+            (fs.readFileSync as jest.Mock).mockReturnValue(yamlContent);
+            (mockTaskRepository.save as jest.Mock)
+                .mockImplementation((task) => {
+                    const stepNumber = task.stepNumber;
+                    if (stepNumber === 1) return Promise.resolve(task1Result);
+                    if (stepNumber === 2) return Promise.resolve(task2Result);
+                    if (stepNumber === 3) return Promise.resolve(task3Result);
+                    return Promise.resolve(null);
+                });
+
+            // Act
+            const workflow = await workflowFactory.createWorkflowFromYAML('workflow.yml', clientId, geoJson);
+
+            // Assert
+            expect(mockWorkflowRepository.save).toHaveBeenCalled();
+            expect(mockTaskRepository.save).toHaveBeenCalledTimes(3);
+
+            // Verify the dependencies were set correctly
+            const saveArgs = (mockTaskRepository.save as jest.Mock).mock.calls;
+            expect(saveArgs[0][0].dependencies).toBeUndefined();
+            expect(saveArgs[1][0].dependencies).toBeUndefined();
+            expect(saveArgs[2][0].dependencies).toEqual([task1Result, task2Result]); // Third task depends on both first and second tasks
         });
     });
 });
