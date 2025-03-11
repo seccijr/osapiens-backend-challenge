@@ -41,8 +41,7 @@ const taskWorker = new TaskWorker(taskService);
 
 const workflowService = new WorkflowService(
     workflowsRepository,
-    tasksRepository,
-    resultsRepository
+    tasksRepository
 );
 const workflowController = new WorkflowController(workflowService, workflowFactory);
 

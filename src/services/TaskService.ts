@@ -203,7 +203,9 @@ export class TaskService {
 
         if (currentWorkflow) {
             const allCompleted = currentWorkflow.tasks.every(t => t.status === TaskStatus.Completed);
-            const anyFailed = currentWorkflow.tasks.some(t => t.status === TaskStatus.Failed);
+            const anyFailed = currentWorkflow.tasks.some(
+                t => t.status === TaskStatus.Failed || t.status === TaskStatus.Skipped
+            );
 
             if (anyFailed) {
                 currentWorkflow.status = WorkflowStatus.Failed;

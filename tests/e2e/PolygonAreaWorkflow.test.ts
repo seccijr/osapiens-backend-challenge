@@ -77,8 +77,7 @@ describe('Polygon Area Workflow E2E Test', () => {
 
         const workflowService = new WorkflowService(
             workflowsRepository,
-            tasksRepository,
-            resultsRepository
+            tasksRepository
         );
 
         const workflowController = new WorkflowController(workflowService, workflowFactory);

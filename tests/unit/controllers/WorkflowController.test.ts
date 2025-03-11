@@ -18,7 +18,6 @@ describe('WorkflowController', () => {
             getWorkflowStatus: jest.fn(),
             getWorkflowTasks: jest.fn(),
             getWorkflowResults: jest.fn(),
-            updateWorkflowFinalResult: jest.fn(),
         } as unknown as WorkflowService;
 
         mockWorkflowFactory = {

@@ -30,6 +30,7 @@ export class WorkflowController {
         try {
             const workflowId = req.params.id;
             const workflow = await this.workflowService.getWorkflowById(workflowId);
+            const status = await this.workflowService.getWorkflowStatusById(workflowId);
 
             if (!workflow) {
                 res.status(404).json({
@@ -38,10 +39,7 @@ export class WorkflowController {
                 return;
             }
 
-            res.status(200).json({
-                workflowId: workflow.workflowId,
-                status: workflow.status
-            });
+            res.status(200).json(status);
         } catch (error: any) {
             res.status(500).json({
                 error: `Internal server error: ${error.message}`
@@ -51,7 +49,7 @@ export class WorkflowController {
 
     /**
      * Retrieves the final results of a completed workflow.
-     * Updates and fetches the latest workflow data before returning it.
+     * Fetches the latest workflow data before returning it.
      * Returns error if the workflow doesn't exist, has failed, or hasn't completed yet.
      * 
      * @param req Express request object containing the workflow ID in params
@@ -62,16 +60,6 @@ export class WorkflowController {
         try {
             const workflowId = req.params.id;
             let workflow = await this.workflowService.getWorkflowById(workflowId);
-
-            if (!workflow) {
-                res.status(404).json({
-                    error: 'Workflow not found'
-                });
-                return;
-            }
-
-            await this.workflowService.updateWorkflowFinalResult(workflow);
-            workflow = await this.workflowService.getWorkflowById(workflowId);
             if (!workflow) {
                 res.status(404).json({
                     error: 'Workflow not found'
@@ -93,10 +81,14 @@ export class WorkflowController {
                 return;
             }
 
+            let finalResult = '';
+            if (workflow.finalResult) {
+                finalResult = JSON.parse(workflow.finalResult)
+            }
             res.status(200).json({
                 workflowId: workflow.workflowId,
                 status: workflow.status,
-                finalResult: workflow.finalResult
+                finalResult: finalResult
             });
         } catch (error: any) {
             res.status(500).json({

@@ -120,6 +120,20 @@ export class WorkflowFactory {
             savedTasks.set(step.stepNumber, savedTask);
         }
 
+        // Add a final reporting task if there are any steps
+        if (sortedSteps.length > 0) {
+            const reportingTask = new Task();
+            reportingTask.clientId = clientId;
+            reportingTask.geoJson = geoJson;
+            reportingTask.status = TaskStatus.Queued;
+            reportingTask.taskType = 'reportGeneration';
+            reportingTask.stepNumber = sortedSteps[sortedSteps.length - 1].stepNumber + 1;
+            reportingTask.workflow = savedWorkflow;
+            reportingTask.dependencies = [];
+            const savedTask = await this.taskRepository.save(reportingTask);
+            savedTasks.set(reportingTask.stepNumber, savedTask);
+        }
+
         return savedWorkflow;
     }
 }
