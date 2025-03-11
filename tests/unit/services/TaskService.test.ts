@@ -407,7 +407,7 @@ describe('TaskService with dependencies', () => {
             expect(result).toEqual([readyTask]);
             expect(mockTaskRepository.find).toHaveBeenCalledWith({
                 where: { status: TaskStatus.Ready },
-                relations: ['dependencies']
+                relations: ['dependencies', 'workflow']
             });
         });
     });

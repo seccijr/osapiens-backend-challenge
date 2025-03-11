@@ -96,7 +96,7 @@ export class TaskService {
             where: {
                 status: TaskStatus.Ready
             },
-            relations: ['dependencies']
+            relations: ['dependencies', 'workflow']
         });
     }
 
@@ -109,7 +109,7 @@ export class TaskService {
             where: {
                 status: TaskStatus.Queued
             },
-            relations: ['dependencies']
+            relations: ['dependencies', 'workflow']
         });
     }
 
