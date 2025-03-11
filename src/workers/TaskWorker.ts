@@ -47,7 +47,11 @@ export class TaskWorker {
             }
 
             // Wait before next polling cycle
-            await new Promise(resolve => setTimeout(resolve, 100));
+            if (!this.stopFlag) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+            } else {
+                break;
+            }
         }
     }
 }
