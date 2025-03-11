@@ -138,7 +138,7 @@ export class TaskService {
         return allCompleted ? TaskStatus.Completed : TaskStatus.Queued;
     }
 
-    async getDependenciesResults(task: Task): Promise<any[]> {
+    async getDependenciesResults(task: Task): Promise<Result[]> {
         if (!task.dependencies || task.dependencies.length === 0) {
             return [];
         }
@@ -151,7 +151,7 @@ export class TaskService {
             resultId: In(dependencies.map(dep => dep.resultId!))
         });
 
-        return results.filter(result => result && result.resultId).map(result => result.resultId);
+        return results;
     }
 
     /**

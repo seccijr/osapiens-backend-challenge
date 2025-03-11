@@ -30,14 +30,14 @@ const workflowFactory = new WorkflowFactory(workflowsRepository, tasksRepository
 const jobFactory = new JobFactory(resultsRepository, tasksRepository);
 const resulFactory = new ResultFactory();
 
-const taskRunner = new TaskService(
+const taskService = new TaskService(
     workflowsRepository,
     resultsRepository,
     tasksRepository,
     resulFactory,
     jobFactory
 );
-const taskWorker = new TaskWorker(taskRunner, tasksRepository);
+const taskWorker = new TaskWorker(taskService, tasksRepository);
 
 const workflowService = new WorkflowService(
     workflowsRepository,

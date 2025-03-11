@@ -266,6 +266,7 @@ describe('WorkflowController', () => {
             // Arrange
             const errorMessage = 'Failed to create workflow from YAML';
             (mockWorkflowFactory.createWorkflowFromYAML as jest.Mock).mockRejectedValue(new Error(errorMessage));
+            jest.spyOn(console, 'error').mockImplementation(() => { });
 
             // Act
             await controller.createAnalysisWorkflow(mockRequest, mockResponse);

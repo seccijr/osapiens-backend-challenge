@@ -443,7 +443,7 @@ describe('TaskService with dependencies', () => {
             const results = await taskService.getDependenciesResults(task);
 
             // Assert
-            expect(results).toEqual(['result-1', 'result-2']);
+            expect(results).toEqual([result1, result2]);
         });
     });
 });

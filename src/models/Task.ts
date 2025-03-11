@@ -1,6 +1,7 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, ManyToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, ManyToMany, JoinTable } from 'typeorm';
 import { Workflow } from './Workflow';
 import {TaskStatus} from '../services/TaskService';
+import { Result } from './Result';
 
 
 @Entity({ name: 'tasks' })
@@ -23,8 +24,8 @@ export class Task {
     @Column({ nullable: true })
     resultId?: string;
 
-    @Column({ nullable: true })
-    dependencyResults?: string[];
+    @OneToMany(() => Result, result => result.dependentTasks)
+    dependencyResults?: Result[];
 
     @Column()
     taskType!: string;
@@ -35,9 +36,7 @@ export class Task {
     @ManyToOne(() => Workflow, workflow => workflow.tasks)
     workflow!: Workflow;
 
-    @ManyToMany(() => Task, task => task.dependents)
+    @ManyToMany(() => Task)
+    @JoinTable()
     dependencies?: Task[];
-
-    @ManyToMany(() => Task, task => task.dependencies)
-    dependents?: Task[];
 }

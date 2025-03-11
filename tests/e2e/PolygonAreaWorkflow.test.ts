@@ -65,7 +65,7 @@ describe('Polygon Area Workflow E2E Test', () => {
         const jobFactory = new JobFactory(resultsRepository, tasksRepository);
         const resultFactory = new ResultFactory();
 
-        const taskRunner = new TaskService(
+        const taskService = new TaskService(
             workflowsRepository,
             resultsRepository,
             tasksRepository,
@@ -73,7 +73,7 @@ describe('Polygon Area Workflow E2E Test', () => {
             jobFactory
         );
 
-        taskWorker = new TaskWorker(taskRunner, tasksRepository);
+        taskWorker = new TaskWorker(taskService);
 
         const workflowService = new WorkflowService(
             workflowsRepository,
