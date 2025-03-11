@@ -4,12 +4,28 @@ import { Request, Response } from 'express';
 import { WorkflowService } from '../services/WorkflowService';
 import { WorkflowFactory, WorkflowStatus } from '../factories/WorkflowFactory';
 
+/**
+ * Controller responsible for handling workflow-related HTTP requests.
+ */
 export class WorkflowController {
+    /**
+     * Creates an instance of WorkflowController.
+     * 
+     * @param workflowService Service for workflow operations
+     * @param workflowFactory Optional factory for creating workflows from definitions
+     */
     constructor(
         private workflowService: WorkflowService,
         private workflowFactory?: WorkflowFactory
     ) { }
 
+    /**
+     * Retrieves the current status of a workflow by its ID.
+     * 
+     * @param req Express request object containing the workflow ID in params
+     * @param res Express response object
+     * @returns Promise<void>
+     */
     async getWorkflowStatus(req: Request, res: Response): Promise<void> {
         try {
             const workflowId = req.params.id;
@@ -33,6 +49,15 @@ export class WorkflowController {
         }
     }
 
+    /**
+     * Retrieves the final results of a completed workflow.
+     * Updates and fetches the latest workflow data before returning it.
+     * Returns error if the workflow doesn't exist, has failed, or hasn't completed yet.
+     * 
+     * @param req Express request object containing the workflow ID in params
+     * @param res Express response object
+     * @returns Promise<void>
+     */
     async getWorkflowResults(req: Request, res: Response): Promise<void> {
         try {
             const workflowId = req.params.id;
@@ -79,6 +104,16 @@ export class WorkflowController {
             });
         }
     }
+
+    /**
+     * Creates a new geospatial analysis workflow based on a predefined YAML definition.
+     * Requires clientId and geoJson in the request body.
+     * Uses the WORKFLOW_DIR environment variable to locate the workflow definition.
+     * 
+     * @param req Express request object containing clientId and geoJson in the body
+     * @param res Express response object
+     * @returns Promise<void>
+     */
     async createAnalysisWorkflow(req: Request, res: Response): Promise<void> {
         try {
             if (!process.env.WORKFLOW_DIR) {

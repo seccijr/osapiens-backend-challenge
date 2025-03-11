@@ -37,7 +37,7 @@ const taskService = new TaskService(
     resulFactory,
     jobFactory
 );
-const taskWorker = new TaskWorker(taskService, tasksRepository);
+const taskWorker = new TaskWorker(taskService);
 
 const workflowService = new WorkflowService(
     workflowsRepository,

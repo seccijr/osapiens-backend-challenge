@@ -25,7 +25,16 @@ interface WorkflowDefinition {
 }
 
 export class WorkflowFactory {
-
+    /**
+     * Creates a new WorkflowFactory instance.
+     * 
+     * This factory is responsible for generating workflow entities and their associated tasks
+     * from configuration files. It handles dependency management between tasks and ensures
+     * the proper initialization of workflow state.
+     * 
+     * @param workflowRepository - Repository for persisting and retrieving Workflow entities
+     * @param taskRepository - Repository for persisting and retrieving Task entities
+     */
     constructor(
         private workflowRepository: Repository<Workflow>,
         private taskRepository: Repository<Task>
@@ -33,10 +42,24 @@ export class WorkflowFactory {
 
     /**
      * Creates a workflow by reading a YAML file and constructing the Workflow and Task entities.
-     * @param filePath - Path to the YAML file.
-     * @param clientId - Client identifier for the workflow.
-     * @param geoJson - The geoJson data string for tasks (customize as needed).
-     * @returns A promise that resolves to the created Workflow.
+     * 
+     * This method:
+     * 1. Reads and parses the YAML workflow definition
+     * 2. Creates and persists a new Workflow entity with initial status
+     * 3. Validates all task dependencies to ensure they reference valid steps
+     * 4. Creates and persists Task entities in step order, linking dependencies
+     * 5. Returns the complete persisted Workflow with all tasks properly connected
+     * 
+     * @param filePath - Path to the YAML file containing workflow definition
+     * @param clientId - Client identifier to associate with the workflow and all tasks
+     * @param geoJson - The geoJson data string to be used for spatial context in tasks
+     * 
+     * @throws Error If the YAML file cannot be read or parsed
+     * @throws Error If any task references an invalid dependency (non-existent step number)
+     * @throws Error If dependencies cannot be resolved (e.g., circular dependencies)
+     * 
+     * @returns A promise that resolves to the fully created and persisted Workflow entity,
+     *          with all Task entities created and properly linked.
      */
     async createWorkflowFromYAML(filePath: string, clientId: string, geoJson: string): Promise<Workflow> {
         const fileContent = fs.readFileSync(filePath, 'utf8');

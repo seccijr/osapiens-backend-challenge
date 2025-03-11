@@ -18,6 +18,15 @@ export const enum TaskStatus {
 }
 
 export class TaskService {
+    /**
+     * Creates a new TaskService instance for managing task execution and workflow state.
+     * 
+     * @param workflowRepository - Repository for workflow entity operations
+     * @param resultRepository - Repository for result entity operations
+     * @param taskRepository - Repository for task entity operations
+     * @param resultFactory - Factory for creating task result objects
+     * @param jobFactory - Factory for creating job instances based on task type
+     */
     constructor(
         private workflowRepository: Repository<Workflow>,
         private resultRepository: Repository<Result>,
@@ -27,15 +36,15 @@ export class TaskService {
     ) { }
 
     /**
-    * Prepares a task by checking workflow step order and dependencies status.
-    * Task can only proceed if all previous steps are completed/failed.
-    * Task status will be set based on dependencies:
-    * - Skipped: if any dependency failed
-    * - Ready: if all dependencies completed
-    * - Queued: if any previous step or dependency is still in progress
-    * 
-    * @param task - The task to prepare
-    */
+     * Prepares a task for execution by evaluating workflow ordering and dependencies.
+     * Updates the task's status based on the current workflow state:
+     * - Sets to Ready when all prerequisites are fulfilled
+     * - Sets to Queued when prior tasks or dependencies are still processing
+     * - Sets to Skipped when any dependency has failed
+     * 
+     * @param task - The task to prepare for execution
+     * @throws Error if the associated workflow cannot be found
+     */
     async prepare(task: Task): Promise<void> {
         // Load the full workflow with tasks
         const workflow = await this.workflowRepository.findOne({
@@ -88,8 +97,10 @@ export class TaskService {
     }
 
     /**
-     * Fetches all tasks that are ready to be executed (all dependencies resolved)
-     * @returns Array of tasks that are ready to be executed
+     * Retrieves all tasks that are in Ready state and can be executed immediately.
+     * Ready tasks have all dependencies resolved and prerequisites completed.
+     * 
+     * @returns Promise resolving to an array of tasks ready for execution
      */
     async getReadyTasks(): Promise<Task[]> {
         return await this.taskRepository.find({
@@ -101,8 +112,10 @@ export class TaskService {
     }
 
     /**
-     * Fetches all tasks that are queued
-     * @returns Array of tasks that are ready to be executed
+     * Retrieves all tasks that are in Queued state waiting for dependencies or prerequisites.
+     * Queued tasks cannot be executed yet but will be eligible later when dependencies resolve.
+     * 
+     * @returns Promise resolving to an array of queued tasks
      */
     async getQueuedTasks(): Promise<Task[]> {
         return await this.taskRepository.find({
@@ -113,31 +126,14 @@ export class TaskService {
         });
     }
 
-    async checkTaskDependenciesStatus(task: Task): Promise<TaskStatus> {
-        if (!task.dependencies || task.dependencies.length === 0) {
-            return TaskStatus.Completed;
-        }
-
-        const dependencies = await this.taskRepository.findBy({
-            taskId: In(task.dependencies.map(dep => dep.taskId!))
-        });
-
-        const anyFailed = dependencies.some(dependency => dependency.status === TaskStatus.Failed);
-        if (anyFailed) {
-            return TaskStatus.Failed;
-        }
-        const anyInprogressOrQueued = dependencies.some(
-            dependency => dependency.status === TaskStatus.InProgress || dependency.status === TaskStatus.Queued
-        );
-        if (anyInprogressOrQueued) {
-            return TaskStatus.Queued;
-        }
-        const allCompleted = dependencies.every(dependency =>
-            dependency.status === TaskStatus.Completed
-        );
-        return allCompleted ? TaskStatus.Completed : TaskStatus.Queued;
-    }
-
+    /**
+     * Retrieves the result data from all dependency tasks for the given task.
+     * The results can be used as inputs for the task's job execution.
+     * 
+     * @param task - The task whose dependency results are needed
+     * @returns Promise resolving to an array of Result objects from dependencies,
+     *          or empty array if no dependencies exist
+     */
     async getDependenciesResults(task: Task): Promise<Result[]> {
         if (!task.dependencies || task.dependencies.length === 0) {
             return [];
@@ -155,9 +151,17 @@ export class TaskService {
     }
 
     /**
-     * Runs the appropriate job based on the task's type, managing the task's status.
-     * @param task - The task entity that determines which job to run.
-     * @throws If the job fails, it rethrows the error.
+     * Executes the task by running the appropriate job based on task type.
+     * Manages the entire task lifecycle:
+     * 1. Updates task status to InProgress
+     * 2. Loads dependency results
+     * 3. Executes the appropriate job
+     * 4. Stores execution results
+     * 5. Updates task and workflow statuses
+     * 
+     * @param task - The task to execute
+     * @throws Error if task isn't in Ready state
+     * @throws Error if job execution fails (after updating task status to Failed)
      */
     async run(task: Task): Promise<void> {
         if (task.status !== TaskStatus.Ready) {
