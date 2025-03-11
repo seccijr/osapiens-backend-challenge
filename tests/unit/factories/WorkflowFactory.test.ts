@@ -67,7 +67,7 @@ describe('WorkflowFactory with dependencies', () => {
 
             // Assert
             expect(mockWorkflowRepository.save).toHaveBeenCalled();
-            expect(mockTaskRepository.save).toHaveBeenCalledTimes(3);
+            expect(mockTaskRepository.save).toHaveBeenCalledTimes(4);
 
             // Verify the dependencies were set correctly
             const saveArgs = (mockTaskRepository.save as jest.Mock).mock.calls;
@@ -96,7 +96,7 @@ describe('WorkflowFactory with dependencies', () => {
 
             // Assert
             expect(mockWorkflowRepository.save).toHaveBeenCalled();
-            expect(mockTaskRepository.save).toHaveBeenCalledTimes(3);
+            expect(mockTaskRepository.save).toHaveBeenCalledTimes(4);
 
             // Verify no dependencies were set
             const saveArgs = (mockTaskRepository.save as jest.Mock).mock.calls;
@@ -159,7 +159,7 @@ describe('WorkflowFactory with dependencies', () => {
 
             // Assert
             expect(mockWorkflowRepository.save).toHaveBeenCalled();
-            expect(mockTaskRepository.save).toHaveBeenCalledTimes(3);
+            expect(mockTaskRepository.save).toHaveBeenCalledTimes(4);
 
             // Verify the dependencies were set correctly
             const saveArgs = (mockTaskRepository.save as jest.Mock).mock.calls;

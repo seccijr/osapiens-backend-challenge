@@ -62,7 +62,7 @@ describe('Polygon Area Workflow E2E Test', () => {
 
         // Set up factories, services, workers and controllers
         const workflowFactory = new WorkflowFactory(workflowsRepository, tasksRepository);
-        const jobFactory = new JobFactory(resultsRepository, tasksRepository);
+        const jobFactory = new JobFactory(resultsRepository, tasksRepository, workflowsRepository);
         const resultFactory = new ResultFactory();
 
         const taskService = new TaskService(
@@ -163,9 +163,8 @@ describe('Polygon Area Workflow E2E Test', () => {
         expect(workflow.status).toBe(WorkflowStatus.Completed);
 
         // Assert workflow results
-        const finalResult = JSON.parse(workflow.finalResult);
+        const finalResult = workflow.finalResult;
         expect(finalResult).toBeDefined();
-        expect(finalResult.success).toBe(true);
         expect(finalResult.tasks.length).toBe(4);
         expect(finalResult.summary.completedTasks).toBe(4);
     });

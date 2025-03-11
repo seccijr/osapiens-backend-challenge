@@ -45,7 +45,7 @@ describe('WorkflowController', () => {
             const completedWorkflow = {
                 workflowId: 'test-workflow-id',
                 status: WorkflowStatus.Completed,
-                finalResult: 'Sample workflow result data'
+                finalResult: '["Sample workflow result data"]'
             } as Workflow;
 
             (mockWorkflowService.getWorkflowById as jest.Mock).mockResolvedValue(completedWorkflow);
@@ -59,7 +59,7 @@ describe('WorkflowController', () => {
             expect(mockResponse.json).toHaveBeenCalledWith({
                 workflowId: 'test-workflow-id',
                 status: 'completed',
-                finalResult: 'Sample workflow result data'
+                finalResult: ["Sample workflow result data"]
             });
         });
 

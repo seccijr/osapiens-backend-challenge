@@ -27,7 +27,7 @@ const tasksRepository = AppDataSource.getRepository(Task);
 const workflowsRepository = AppDataSource.getRepository(Workflow);
 const workflowFactory = new WorkflowFactory(workflowsRepository, tasksRepository);
 
-const jobFactory = new JobFactory(resultsRepository, tasksRepository);
+const jobFactory = new JobFactory(resultsRepository, tasksRepository, workflowsRepository);
 const resulFactory = new ResultFactory();
 
 const taskService = new TaskService(
