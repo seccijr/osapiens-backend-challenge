@@ -10,7 +10,7 @@ This repository demonstrates a backend architecture that handles asynchronous ta
 
 - Define and manage entities such as `Task` and `Workflow`.
 - Use a `WorkflowFactory` to create workflows from YAML configurations.
-- Implement a `TaskService` that executes jobs associated with tasks and manages task and workflow states.
+- Implement a `TaskRunner` that executes jobs associated with tasks and manages task and workflow states.
 - Run tasks asynchronously using a background worker.
 
 ## Key Features
@@ -28,16 +28,16 @@ This repository demonstrates a backend architecture that handles asynchronous ta
 3. **Asynchronous Task Execution**
 
    - A background worker (`taskWorker`) continuously polls for `queued` tasks.
-   - The `TaskService` runs the appropriate job based on a task’s `taskType`.
+   - The `TaskRunner` runs the appropriate job based on a task’s `taskType`.
 
 4. **Robust Status Management**
 
-   - `TaskService` updates the status of tasks (from `queued` to `in_progress`, `completed`, or `failed`).
+   - `TaskRunner` updates the status of tasks (from `queued` to `in_progress`, `completed`, or `failed`).
    - Workflow status is evaluated after each task completes, ensuring you know when the entire workflow is `completed` or `failed`.
 
 5. **Dependency Injection and Decoupling**
-   - `TaskService` takes in only the `Task` and determines the correct job internally.
-   - `TaskService` handles task state transitions, leaving the background worker clean and focused on orchestration.
+   - `TaskRunner` takes in only the `Task` and determines the correct job internally.
+   - `TaskRunner` handles task state transitions, leaving the background worker clean and focused on orchestration.
 
 ## Project Structure
 
@@ -54,7 +54,7 @@ src
 ├─ jobs/
 │   ├─ Job.ts           # Job interface
 │   ├─ JobFactory.ts    # getJobForTaskType function for mapping taskType to a Job
-│   ├─ TaskService.ts    # Handles job execution & task/workflow state transitions
+│   ├─ TaskRunner.ts    # Handles job execution & task/workflow state transitions
 │   ├─ DataAnalysisJob.ts (example)
 │   ├─ EmailNotificationJob.ts (example)
 │
@@ -168,7 +168,7 @@ src
 
 4. **Check Logs:**
    - The worker picks up tasks from `queued` state.
-   - `TaskService` runs the corresponding job (e.g., data analysis, email notification) and updates states.
+   - `TaskRunner` runs the corresponding job (e.g., data analysis, email notification) and updates states.
    - Once tasks are done, the workflow is marked as `completed`.
 
 ### **Coding Challenge Tasks for the Interviewee**
@@ -237,8 +237,8 @@ Modify the system to support workflows with tasks that depend on the outputs of 
 #### **Steps:**
 
 1. Update the `Task` entity to include a `dependency` field that references another task
-2. Modify the `TaskService` to wait for dependent tasks to complete and pass their outputs as inputs to the current task.
-3. Extend the workflow YAML format to specify task dependencies (e.g., `dependency`).
+2. Modify the `TaskRunner` to wait for dependent tasks to complete and pass their outputs as inputs to the current task.
+3. Extend the workflow YAML format to specify task dependencies (e.g., `dependsOn`).
 4. Update the `WorkflowFactory` to parse dependencies and create tasks accordingly.
 
 #### **Requirements:**

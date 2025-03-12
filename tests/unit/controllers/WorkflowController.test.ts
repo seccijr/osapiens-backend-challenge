@@ -15,7 +15,6 @@ describe('WorkflowController', () => {
     beforeEach(() => {
         mockWorkflowService = {
             getWorkflowById: jest.fn(),
-            getWorkflowStatus: jest.fn(),
             getWorkflowTasks: jest.fn(),
             getWorkflowResults: jest.fn(),
         } as unknown as WorkflowService;

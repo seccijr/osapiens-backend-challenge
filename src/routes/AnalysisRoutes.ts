@@ -11,9 +11,9 @@ export const createAnalysisRouter = (workflowController: WorkflowController) => 
     const router = Router();
 
     /**
+     * Create a new analysis workflow
+     * 
      * @route POST /analysis
-     * @description Creates a new analysis workflow
-     * @access Public
      * 
      * @swagger
      * /analysis:
@@ -35,6 +35,25 @@ export const createAnalysisRouter = (workflowController: WorkflowController) => 
      *               geoJson:
      *                 type: object
      *                 description: GeoJSON data to be analyzed
+     *             example:
+     *               clientId: test-client
+     *               geoJson:
+     *                   value: {
+     *                       type: 'Feature',
+     *                       properties: {},
+     *                       geometry: {
+     *                           type: 'Polygon',
+     *                           coordinates: [
+     *                               [
+     *                                   [0, 0],
+     *                                   [1, 0],
+     *                                   [1, 1],
+     *                                   [0, 1],
+     *                                   [0, 0]
+     *                               ]
+     *                           ]
+     *                       }
+     *                   }
      *     responses:
      *       202:
      *         description: Workflow created successfully

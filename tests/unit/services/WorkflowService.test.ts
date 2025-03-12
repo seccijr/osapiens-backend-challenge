@@ -114,37 +114,6 @@ describe('WorkflowService', () => {
         });
     });
 
-    describe('getWorkflowStatus', () => {
-        it('should return workflow status when workflow exists', async () => {
-            // Arrange
-            const mockWorkflow = {
-                workflowId: 'test-id',
-                clientId: clientId,
-                status: WorkflowStatus.InProgress,
-                tasks: []
-            } as Workflow;
-            
-            mockWorkflowRepository.findOne = jest.fn().mockResolvedValue(mockWorkflow);
-            
-            // Act
-            const result = await service.getWorkflowStatus('test-id');
-            
-            // Assert
-            expect(result).toBe(WorkflowStatus.InProgress);
-        });
-
-        it('should return null when workflow does not exist', async () => {
-            // Arrange
-            mockWorkflowRepository.findOne = jest.fn().mockResolvedValue(null);
-            
-            // Act
-            const result = await service.getWorkflowStatus('non-existent-id');
-            
-            // Assert
-            expect(result).toBeNull();
-        });
-    });
-
     describe('getWorkflowTasks', () => {
         it('should return workflow tasks', async () => {
             // Arrange

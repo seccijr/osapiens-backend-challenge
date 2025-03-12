@@ -3,7 +3,6 @@ import { Repository } from 'typeorm';
 import { Task } from '../models/Task';
 import { Workflow } from '../models/Workflow';
 
-import { WorkflowStatus } from '../factories/WorkflowFactory';
 import { TaskStatus } from './TaskService';
 
 export class WorkflowService {
@@ -52,17 +51,6 @@ export class WorkflowService {
             queuedTasks,
             skippedTasks
         };
-    }
-
-    /**
-     * Retrieves the current status of a workflow
-     * 
-     * @param workflowId - The unique identifier of the workflow
-     * @returns A Promise resolving to the workflow's status (enum WorkflowStatus) or null if workflow not found
-     */
-    async getWorkflowStatus(workflowId: string): Promise<WorkflowStatus | null> {
-        const workflow = await this.getWorkflowById(workflowId);
-        return workflow ? workflow.status : null;
     }
 
     /**
