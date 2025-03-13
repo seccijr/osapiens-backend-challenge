@@ -2,7 +2,7 @@
     "license": "MIT",
     "name": "osapiens-backend-challenge",
     "scripts": {
-        "start": "ts-node src/index.ts",
+        "start": "WORKFLOW_DIR=workflows ts-node src/index.ts",
         "dev": "nodemon --watch src --ext ts --exec ts-node src/index.ts",
         "test": "jest"
     },
@@ -10,13 +10,14 @@
         "@turf/turf": "^7.1.0",
         "@types/geojson": "^7946.0.15",
         "bcrypt": "^5.1.1",
-        "dotenv": "^16.4.7",
         "express": "^4.21.2",
         "js-yaml": "^4.1.0",
         "jsonwebtoken": "^9.0.2",
         "marked": "^15.0.3",
         "reflect-metadata": "^0.2.2",
         "sqlite3": "^5.1.7",
+        "swagger-jsdoc": "^6.2.8",
+        "swagger-ui-express": "^5.0.1",
         "typeorm": "^0.3.20"
     },
     "devDependencies": {
@@ -27,6 +28,8 @@
         "@types/jsonwebtoken": "^9.0.7",
         "@types/node": "^22.10.1",
         "@types/supertest": "^6.0.2",
+        "@types/swagger-jsdoc": "^6.0.4",
+        "@types/swagger-ui-express": "^4.1.8",
         "jest": "^29.7.0",
         "nodemon": "^3.1.7",
         "supertest": "^7.0.0",

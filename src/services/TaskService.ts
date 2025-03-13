@@ -185,11 +185,14 @@ export class TaskService {
             await this.taskRepository.save(task);
 
         } catch (error: any) {
-            const result = this.resultFactory.createResult(task.taskId!, JSON.stringify(error || {}));
+            const result = this.resultFactory.createResult(
+                task.taskId!, 
+                JSON.stringify(error.message)
+            );
             await this.resultRepository.save(result);
             task.resultId = result.resultId!;
             task.status = TaskStatus.Failed;
-            task.progress = null;
+            task.progress = `Failed: ${error.message}`;
             await this.taskRepository.save(task);
 
             throw error;

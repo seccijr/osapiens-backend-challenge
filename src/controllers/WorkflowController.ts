@@ -30,15 +30,15 @@ export class WorkflowController {
         try {
             const workflowId = req.params.id;
             const workflow = await this.workflowService.getWorkflowById(workflowId);
-            const status = await this.workflowService.getWorkflowStatusById(workflowId);
-
+            
             if (!workflow) {
                 res.status(404).json({
                     error: 'Workflow not found'
                 });
                 return;
             }
-
+            
+            const status = await this.workflowService.getWorkflowStatusById(workflowId);
             res.status(200).json(status);
         } catch (error: any) {
             res.status(500).json({

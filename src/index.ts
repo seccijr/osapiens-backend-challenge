@@ -1,6 +1,8 @@
 import 'reflect-metadata';
 import express from 'express';
+import swaggerUi from 'swagger-ui-express';
 
+import { specs } from './swagger';
 
 import { Task } from './models/Task';
 import { Result } from './models/Result';
@@ -49,6 +51,7 @@ const workflowController = new WorkflowController(workflowService, workflowFacto
 // Dependency injection
 const app = express();
 app.use(express.json());
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 app.use('/', createRootRouter());
 app.use('/analysis', createAnalysisRouter(workflowController));
 app.use('/workflow', createWorkflowRouter(workflowController));
