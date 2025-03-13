@@ -10,7 +10,6 @@
         "@turf/turf": "^7.1.0",
         "@types/geojson": "^7946.0.15",
         "bcrypt": "^5.1.1",
-        "dotenv": "^16.4.7",
         "express": "^4.21.2",
         "js-yaml": "^4.1.0",
         "jsonwebtoken": "^9.0.2",

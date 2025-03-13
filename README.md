@@ -219,15 +219,14 @@ The `TaskService` enforces these transitions.
 ### Response Codes
 
 - **200 OK**: Request successful
-- **201 Created**: Resource successfully created
-- **400 Bad Request**: Invalid request parameters
-- **404 Not Found**: Resource not found
-- **409 Conflict**: Resource state conflict (e.g., workflow already completed)
+- **202 Created**: Workflow successfully created
+- **400 Bad Request**: The workflow is not yet completed
+- **404 Not Found**: The workflow ID does not exist
 - **500 Internal Server Error**: Server-side error
 
 ## Testing
 
-This project was developed using Test-Driven Development (TDD), with tests written before implementation. The test suite covers unit, integration, and end-to-end tests.
+This project was developed using Test-Driven Development (TDD), with tests written before implementation. The test suite covers unit and integration tests.
 
 ### Running Unit Tests
 
@@ -242,13 +241,13 @@ This runs all unit tests using Jest, covering:
 - State machine transitions
 - Error handling
 
-### Running End-to-End Tests
+### Running Integration Tests
 
 ```bash
-yarn test tests/e2e
+yarn test tests/integration
 ```
 
-E2E tests cover the complete flow:
+Integration tests cover the complete flow:
 1. API request handling
 2. Workflow creation
 3. Task queueing and execution
@@ -258,6 +257,26 @@ E2E tests cover the complete flow:
 7. Final response generation
 
 ### Manual Testing
+
+#### Using Swagger UI
+
+The API is documented using Swagger UI. Access the documentation at [http://localhost:3000/api-docs](http://localhost:3000/api-docs) after running the application.
+
+![Swagger UI](./public/swagger_general.png)
+
+1) Click on the `/analysis` endpoint to expand the details.
+2) Click on the "Try it out" button.
+3) Enter the request body and click "Execute" to create a new workflow.
+
+![Swagger UI](./public/swagger_analysis_1.png)
+![Swagger UI](./public/swagger_analysis_2.png)
+
+4) Use the `/workflow/{id}/status` and `/workflow/{id}/results` endpoints to check the workflow status and results.
+
+![Swagger UI](./public/swagger_workflows_1.png)
+![Swagger UI](./public/swagger_workflows_2.png)
+
+#### Using Curl
 
 For manual testing, use the following curl commands:
 
@@ -333,7 +352,7 @@ workflows/                      # YAML workflow definitions
 │
 tests/
 ├─ unit/                        # Unit tests for individual components
-├─ e2e/                         # End-to-end API tests
+├─ integration/                 # End-to-end API tests
 │
 public/                         # Static files
 ```

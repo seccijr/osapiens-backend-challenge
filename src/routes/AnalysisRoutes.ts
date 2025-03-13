@@ -37,23 +37,22 @@ export const createAnalysisRouter = (workflowController: WorkflowController) => 
      *                 description: GeoJSON data to be analyzed
      *             example:
      *               clientId: test-client
-     *               geoJson:
-     *                   value: {
-     *                       type: 'Feature',
-     *                       properties: {},
-     *                       geometry: {
-     *                           type: 'Polygon',
-     *                           coordinates: [
-     *                               [
-     *                                   [0, 0],
-     *                                   [1, 0],
-     *                                   [1, 1],
-     *                                   [0, 1],
-     *                                   [0, 0]
-     *                               ]
-     *                           ]
-     *                       }
-     *                   }
+     *               geoJson: {
+     *                      type: 'Feature',
+     *                      properties: {},
+     *                      geometry: {
+     *                          type: 'Polygon',
+     *                          coordinates: [
+     *                              [
+     *                                  [0, 0],
+     *                                  [1, 0],
+     *                                  [1, 1],
+     *                                  [0, 1],
+     *                                  [0, 0]
+     *                              ]
+     *                          ]
+     *                      }
+     *                  }
      *     responses:
      *       202:
      *         description: Workflow created successfully

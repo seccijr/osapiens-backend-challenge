@@ -6,7 +6,7 @@ import { WorkflowStatus } from '../../src/factories/WorkflowFactory';
 
 import { e2eBeforeAll, e2eAfterAll, e2eBeforeEach, e2eAfterEach } from './common/Bootstrap';
 
-describe('Workflow E2E Test', () => {
+describe('Workflow Integration Test', () => {
     let app: Express;
     
     beforeAll(async () => {
